@@ -1,0 +1,14 @@
+.image-container {
+  width: 100%; /* Match the parent viewer container */
+  height: 100%; /* Match the parent viewer container */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-container img {
+  width: 100%; /* Fit the container width */
+  height: 100%; /* Fit the container height */
+  object-fit: contain; /* Ensure the image retains its aspect ratio */
+  border-radius: 5px; /* Optional: Add rounded corners */
+}

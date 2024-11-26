@@ -1,0 +1,43 @@
+.container {
+  display: flex;
+  gap: 20px;
+  height: 100vh;
+}
+
+.file-list-wrapper {
+  max-width: 300px;
+  min-width: 150px;
+  flex-shrink: 0;
+  border-right: 1px solid #ccc;
+  background: #2f2f2f;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+/* Main content area */
+.viewer-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.viewer {
+  width: 640px;
+  height: 360px;
+  margin: 0 auto;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background-color: #f9f9f9;
+  overflow: hidden;
+}
+
+/* Tags section */
+.tags-section {
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+/* Adjust the template to match: */

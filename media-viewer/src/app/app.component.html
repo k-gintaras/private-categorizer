@@ -1,0 +1,15 @@
+<mat-sidenav-container>
+  <mat-sidenav mode="side" opened>
+    <mat-toolbar color="primary">Navigation</mat-toolbar>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/tags" routerLinkActive="active">Tags</a>
+      <a mat-list-item routerLink="/videos" routerLinkActive="active">Videos</a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

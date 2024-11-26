@@ -1,0 +1,31 @@
+<div class="container">
+  <div class="file-list-wrapper">
+    <app-file-list></app-file-list>
+  </div>
+
+  <div class="viewer-wrapper">
+    <div class="viewer">
+      <app-image-view
+        *ngIf="isImage(selectedFile)"
+        [filePath]="selectedFile"
+      ></app-image-view>
+      <app-video-view
+        *ngIf="isVideo(selectedFile)"
+        [videoPath]="selectedFile"
+      ></app-video-view>
+      <p
+        *ngIf="selectedFile && !isImage(selectedFile) && !isVideo(selectedFile)"
+      >
+        Cannot preview this file type.
+      </p>
+    </div>
+
+    <div class="tags-section">
+      <div class="selected-file text-sm text-gray-600 mb-4">
+        {{ selectedFile }}
+      </div>
+      <app-tagger></app-tagger>
+      <app-tags></app-tags>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,6 @@
+<h1>File List</h1>
+<ul>
+  <li *ngFor="let file of files" (click)="selectFile(file.path)">
+    {{ file.type === "directory" ? "📁" : "📄" }} {{ getFileName(file.path) }}
+  </li>
+</ul>

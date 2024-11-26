@@ -1,0 +1,16 @@
+# Ignore node_modules folders
+node_modules/
+
+# Ignore .env files
+.env
+
+# Ignore lock files if not necessary (optional)
+package-lock.json
+
+# Ignore SQLite database
+media.db
+
+# Ignore system files
+*.log
+.DS_Store
+Thumbs.db

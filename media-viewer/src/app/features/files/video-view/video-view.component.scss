@@ -1,0 +1,13 @@
+.video-container {
+  width: 100%; /* Match the parent viewer container */
+  height: 100%; /* Match the parent viewer container */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-container video {
+  width: 100%; /* Fit the container width */
+  height: 100%; /* Fit the container height */
+  object-fit: contain; /* Preserve the aspect ratio */
+}

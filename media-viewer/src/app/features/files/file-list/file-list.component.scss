@@ -1,0 +1,32 @@
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  max-width: 300px; /* Limit the width of the file list */
+  overflow-y: auto; /* Add scroll if necessary */
+  max-height: 100%; /* Ensure the list doesn't exceed its container */
+}
+
+li.file-item {
+  cursor: pointer;
+  background-color: #474747;
+
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  white-space: nowrap; /* Prevent wrapping */
+  overflow: hidden; /* Hide overflowing text */
+  text-overflow: ellipsis; /* Add "..." for long names */
+}
+
+li.file-item:hover {
+  background-color: #818080;
+}
+
+span.file-name {
+  display: inline-block;
+  max-width: 200px; /* Truncate text at 200px */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
