@@ -287,41 +287,41 @@ app.get('/files/:filePath/tags', (req, res) => {
   });
 });
 
-// Add a tag to a file
 app.post('/files/:filePath/tags', (req, res) => {
   const { filePath } = req.params;
   const { tagId } = req.body;
+  const normalizedFilePath = filePath.startsWith('/') ? decodeURIComponent(filePath) : `/${decodeURIComponent(filePath)}`;
 
-  if (!tagId) {
-    return res.status(400).json({ error: 'tagId is required' });
-  }
-
-  db.run('INSERT INTO file_tags (file_id, tag_id) VALUES (?, ?)', [decodeURIComponent(filePath), tagId], function (err) {
+  db.run('INSERT INTO file_tags (file_id, tag_id) VALUES (?, ?)', [normalizedFilePath, tagId], (err) => {
     if (err) {
-      // If error is due to unique constraint, return success since the relationship exists
-      if (err.message.includes('UNIQUE constraint failed')) {
-        return res.json({ message: 'Tag already exists for file' });
-      }
-      console.error('Database error:', err);
+      console.error('Error adding tag:', err);
       return res.status(500).json({ error: err.message });
     }
     res.status(201).json({ message: 'Tag added successfully' });
   });
 });
 
-// Remove a tag from a file
 app.delete('/files/:filePath/tags/:tagId', (req, res) => {
   const { filePath, tagId } = req.params;
+  const normalizedFilePath = filePath.startsWith('/') ? decodeURIComponent(filePath) : `/${decodeURIComponent(filePath)}`;
 
-  db.run('DELETE FROM file_tags WHERE file_id = ? AND tag_id = ?', [decodeURIComponent(filePath), tagId], function (err) {
+  console.log('Normalized filePath:', normalizedFilePath);
+
+  db.run('DELETE FROM file_tags WHERE file_id = ? AND tag_id = ?', [normalizedFilePath, tagId], function (err) {
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ error: err.message });
     }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'File-tag relationship not found' });
+
+    console.log('Rows affected:', this.changes);
+
+    // Return 204 No Content if the row was successfully deleted
+    if (this.changes > 0) {
+      return res.status(204).send();
     }
-    res.status(204).send();
+
+    // If no rows were affected, return a 404
+    return res.status(404).json({ error: 'File-tag relationship not found' });
   });
 });
 

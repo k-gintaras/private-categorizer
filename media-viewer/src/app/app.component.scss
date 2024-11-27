@@ -1,15 +1,24 @@
-mat-sidenav-container {
-  height: 100vh;
+mat-toolbar {
+  display: flex;
+  justify-content: flex-start; /* Align navigation items to the left */
+  gap: 1rem; /* Space between navigation links */
+  padding: 0 1rem; /* Horizontal padding for the toolbar */
 }
 
-mat-sidenav {
-  width: 150px;
+mat-toolbar a {
+  text-decoration: none; /* Remove underline from links */
+  color: white; /* Ensure contrast with the toolbar background */
+  font-size: 0.875rem; /* Slightly smaller font for compactness */
+}
+
+mat-toolbar a.active {
+  font-weight: bold; /* Highlight active link */
+  text-decoration: underline; /* Optional: add underline to active link */
 }
 
 .content {
-  padding: 20px;
-}
-
-.active {
-  font-weight: bold;
+  background-color: grey;
+  padding: 1rem; /* Add padding for the main content area */
+  height: calc(100vh - 64px); /* Adjust height to account for toolbar */
+  overflow: auto; /* Ensure scrolling for overflowing content */
 }

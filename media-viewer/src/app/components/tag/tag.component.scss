@@ -1,0 +1,56 @@
+:host {
+  display: inline-block;
+}
+
+.tag {
+  display: inline-flex; /* Align text and icon horizontally */
+  align-items: center; /* Vertically center all children */
+  padding: 0 0.4rem; /* Compact padding */
+  border-radius: 12px;
+  font-size: 0.75rem; /* Compact font size */
+  line-height: 1rem; /* Match chip height */
+  color: #fff;
+  cursor: pointer;
+  height: 1.5rem; /* Ensure a consistent height for all chips */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Prevent overflowing content */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+}
+
+.tag:hover {
+  opacity: 0.9;
+}
+
+.tag .tag-text {
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+  white-space: nowrap; /* Keep text on a single line */
+  margin-right: 0.3rem; /* Add spacing between text and icon */
+}
+
+.tag-remove {
+  display: flex; /* Flexbox ensures proper alignment */
+  align-items: center; /* Vertically center the icon inside the button */
+  justify-content: center; /* Center icon horizontally */
+  border: none; /* Remove default button border */
+  background: none; /* Remove default button background */
+  cursor: pointer;
+  padding: 0; /* Remove button padding */
+  margin: 0; /* Remove unnecessary margins */
+  font-size: 1rem; /* Ensure consistent icon size */
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tag-remove:hover {
+  color: #fff; /* Highlight icon on hover */
+}
+
+mat-icon {
+  font-size: 24px; /* Match icon size to text size */
+  line-height: 1; /* Prevent excess spacing from inherited line height */
+  vertical-align: middle; /* Align icon with the middle of the text */
+}
+
+.mat-icon.v-align-middle {
+  vertical-align: middle; /* Utility class for additional control */
+}

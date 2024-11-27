@@ -2,8 +2,47 @@
   display: block;
 }
 
-mat-chip-listbox {
+.tags-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.25rem;
+}
+
+mat-chip-option {
+  display: inline-flex; /* Inline-flex ensures proper alignment inside the chip */
+  align-items: center; /* Perfectly align text and icon vertically */
+  padding: 0 0.3rem; /* Reduce padding for compact design */
+  border-radius: 12px; /* Compact rounded corners */
+  height: 1.5rem; /* Consistent height */
+  font-size: 0.8rem; /* Smaller font size */
+  line-height: 1.2; /* Adjust line height for smaller font */
+  color: #fff;
+  cursor: pointer;
+}
+
+mat-chip-option:hover {
+  opacity: 0.85;
+}
+
+mat-chip-option .chip-text {
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+  white-space: nowrap; /* Ensure text stays on one line */
+  margin-right: 0.3rem; /* Tight space between text and icon */
+}
+
+mat-chip-option .remove-icon {
+  font-size: 14px; /* Slightly smaller icon size for compactness */
+  width: auto; /* Prevent the button from becoming too wide */
+  height: auto; /* Prevent the button from increasing the chip height */
+  line-height: 1; /* Keep the icon centered */
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex; /* Ensure icon aligns vertically */
+  align-items: center;
+  justify-content: center;
+}
+
+mat-chip-option .remove-icon:hover {
+  color: #fff;
 }

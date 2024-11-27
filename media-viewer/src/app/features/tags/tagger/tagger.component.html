@@ -1,22 +1,20 @@
 <div *ngIf="currentFile" class="p-4">
-  <div class="mb-6">
-    <div *ngFor="let group of getTagKeys()" class="mb-4">
-      <h4 class="text-md font-medium mb-2 capitalize text-gray-600">
-        {{ group }}
-      </h4>
-      <mat-chip-listbox>
-        <mat-chip-option
+  <div class="tag-groups">
+    <div *ngFor="let group of getTagKeys()" class="tag-group">
+      <h4 class="group-title">{{ group }}</h4>
+      <div class="tag-chips">
+        <app-tag
           *ngFor="let tag of groupedTags[group]"
-          (click)="addTag(tag.id)"
-          [style.background-color]="tag.color"
-        >
-          {{ tag.name }}
-        </mat-chip-option>
-      </mat-chip-listbox>
+          [tag]="tag"
+          [fileId]="currentFile"
+          [canRemove]="false"
+          [canAdd]="true"
+        ></app-tag>
+      </div>
     </div>
   </div>
 </div>
 
 <div *ngIf="!currentFile" class="p-4 text-gray-500 italic">
-  <p>Please select a file to add tags.</p>
+  Please select a file to add tags.
 </div>

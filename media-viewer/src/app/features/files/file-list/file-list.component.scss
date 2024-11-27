@@ -4,7 +4,7 @@ ul {
   margin: 0;
   max-width: 300px; /* Limit the width of the file list */
   overflow-y: auto; /* Add scroll if necessary */
-  max-height: 100%; /* Ensure the list doesn't exceed its container */
+  max-height: 80%; /* Ensure the list doesn't exceed its container */
 }
 
 li.file-item {

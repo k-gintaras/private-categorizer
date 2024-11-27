@@ -1,0 +1,15 @@
+<div
+  class="tag"
+  [style.background-color]="tag.color"
+  (click)="onTagClick($event)"
+>
+  <span class="tag-text">{{ tag.name }}</span>
+  <button
+    *ngIf="canRemove"
+    class="tag-remove"
+    (click)="onRemoveClick($event)"
+    aria-label="Remove tag"
+  >
+    <mat-icon class="v-align-middle">cancel</mat-icon>
+  </button>
+</div>

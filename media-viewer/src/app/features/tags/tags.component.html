@@ -1,23 +1,9 @@
-<div class="p-4">
-  <div *ngIf="currentFile">
-    <div *ngIf="fileTags.length > 0">
-      <mat-chip-listbox>
-        <mat-chip-option
-          *ngFor="let tag of fileTags"
-          [style.background-color]="tag.color"
-          [selected]="true"
-          disabled
-        >
-          {{ tag.name }}
-        </mat-chip-option>
-      </mat-chip-listbox>
-    </div>
-    <div *ngIf="fileTags.length === 0" class="text-gray-500">
-      No tags assigned
-    </div>
-  </div>
-
-  <div *ngIf="!currentFile" class="text-gray-500">
-    Select a file to view its tags
-  </div>
+<div class="tags-container">
+  <app-tag
+    *ngFor="let tag of fileTags"
+    [tag]="tag"
+    [fileId]="currentFile"
+    [canRemove]="true"
+    [canAdd]="false"
+  ></app-tag>
 </div>
