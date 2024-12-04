@@ -1,23 +1,35 @@
 <div class="container">
-  <app-file-list></app-file-list>
+  <!-- Collapsible File List -->
+  <div class="file-list-wrapper">
+    <button class="collapse-button" (click)="toggleFileList()">
+      {{ isFileListVisible ? "Hide" : "Show" }} File List
+    </button>
+    <div *ngIf="isFileListVisible" class="file-list-content">
+      <app-file-list></app-file-list>
+    </div>
+  </div>
 
+  <!-- Main Viewer Section -->
   <div class="viewer-wrapper">
     <div class="viewer">
       <app-image-view
         *ngIf="isImage(selectedFile)"
-        [filePath]="selectedFile"
+        [fileInfo]="selectedFile"
       ></app-image-view>
-      <app-video-view
-        *ngIf="isVideo(selectedFile)"
-        [videoPath]="selectedFile"
-      ></app-video-view>
+      <app-video-view *ngIf="isVideo(selectedFile)"></app-video-view>
       <p
         *ngIf="selectedFile && !isImage(selectedFile) && !isVideo(selectedFile)"
       >
         Cannot preview this file type.
       </p>
     </div>
-
+    <hr />
+    <!-- Next Random Component -->
+    <!-- <app-next-random></app-next-random> -->
+    <app-video-controls></app-video-controls>
+    <app-like></app-like>
+    <!-- Tags Section -->
+    <hr />
     <div class="tags-section">
       <div class="selected-file text-sm text-gray-600 mb-4">
         {{ selectedFile }}

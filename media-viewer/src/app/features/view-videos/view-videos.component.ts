@@ -6,6 +6,10 @@ import { NgIf } from '@angular/common';
 import { SelectedFileService } from '../../services/selected-file.service';
 import { TaggerComponent } from '../tags/tagger/tagger.component';
 import { TagsComponent } from '../tags/tags.component';
+import { NextRandomComponent } from '../../components/next-random/next-random.component';
+import { FileInfo } from '../../models/file.model';
+import { VideoControlsComponent } from '../../components/video-controls/video-controls.component';
+import { LikeComponent } from '../../components/like/like.component';
 
 @Component({
   selector: 'app-view-videos',
@@ -17,27 +21,36 @@ import { TagsComponent } from '../tags/tags.component';
     TaggerComponent,
     TagsComponent,
     TagsComponent,
+    VideoControlsComponent,
+    LikeComponent,
+    LikeComponent,
   ],
   templateUrl: './view-videos.component.html',
   styleUrls: ['./view-videos.component.scss'], // Corrected from `styleUrl` to `styleUrls`
 })
 export class ViewVideosComponent implements OnInit {
-  selectedFile: string | null = null;
+  selectedFile: FileInfo | null = null;
 
   constructor(private fileTracker: SelectedFileService) {}
+  isFileListVisible = true;
 
+  toggleFileList(): void {
+    this.isFileListVisible = !this.isFileListVisible;
+  }
   ngOnInit(): void {
     // Subscribe to the selected file from the FileTrackerService
-    this.fileTracker.selectedFile$.subscribe((filePath) => {
-      this.selectedFile = filePath;
+    this.fileTracker.selectedFile$.subscribe((f) => {
+      this.selectedFile = f;
     });
   }
 
-  isImage(filePath: string | null): boolean {
+  isImage(f: FileInfo | null): boolean {
+    const filePath = f?.path;
     return !!filePath && /\.(jpg|jpeg|png|gif|bmp)$/i.test(filePath);
   }
 
-  isVideo(filePath: string | null): boolean {
+  isVideo(f: FileInfo | null): boolean {
+    const filePath = f?.path;
     return !!filePath && /\.(mp4|webm|ogg|avi|mov|mkv|flv)$/i.test(filePath);
   }
 }

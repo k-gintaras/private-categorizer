@@ -1,43 +1,50 @@
+import { Component, OnInit } from '@angular/core';
 import { NgFor } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
 import { SelectedFileService } from '../../../services/selected-file.service';
+import { FileInfo } from '../../../models/file.model';
+import { FileCacheService } from '../../../services/file-cache.service';
 
 @Component({
   selector: 'app-file-list',
+  standalone: true,
   imports: [NgFor],
   templateUrl: './file-list.component.html',
-  styleUrls: ['./file-list.component.scss'], // Corrected from `styleUrl` to `styleUrls`
+  styleUrls: ['./file-list.component.scss'],
 })
-export class FileListComponent {
-  files: any[] = [];
+export class FileListComponent implements OnInit {
+  files: FileInfo[] = [];
 
   constructor(
-    private http: HttpClient,
-    private fileTracker: SelectedFileService
+    private fileService: FileCacheService,
+    private selectedFileService: SelectedFileService
   ) {}
 
   ngOnInit(): void {
-    this.fetchFiles();
+    this.loadFiles();
   }
 
-  fetchFiles(): void {
-    this.http.get<any[]>('http://localhost:3000/files').subscribe((data) => {
-      this.files = data.filter(
-        (f) => f.type === 'file' && this.isSupportedVideo(f.path)
-      );
+  /**
+   * Fetches the list of files using the FileService.
+   */
+  private loadFiles(): void {
+    this.fileService.fetchFiles().subscribe({
+      next: (files) => {
+        this.files = files;
+      },
+      error: (error) => {
+        console.error('Error fetching files:', error);
+      },
     });
   }
 
-  isSupportedVideo(path: string): boolean {
-    return path.indexOf('mp4') > 0;
+  /**
+   * Selects a file using SelectedFileService.
+   */
+  selectFile(f: FileInfo): void {
+    this.selectedFileService.selectFile(f.id);
   }
 
-  selectFile(filePath: string): void {
-    this.fileTracker.selectFile(filePath); // Use the service to update the selected file
-  }
-
-  getFileName(fullPath: string): string {
-    return fullPath.split('/').pop() || fullPath.split('\\').pop() || fullPath;
+  getFileName(f: FileInfo) {
+    return this.fileService.getFileName(f.path);
   }
 }

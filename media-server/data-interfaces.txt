@@ -1,0 +1,95 @@
+interface File {
+  id: number;
+  parent_id?: number;
+  path: string;
+  type: string;
+  size?: number;
+  last_modified?: Date;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+}
+
+interface Tag {
+  id: number;
+  name: string;
+  tag_group: string;
+  color: string;
+  created_at: Date;
+}
+
+interface ColorScheme {
+  id: number;
+  name: string;
+  color_palette: string[]; // JSON array
+  created_at: Date;
+}
+
+interface VideoAnalytics {
+  id: number;
+  file_id: number;
+  play_count: number;
+  skips: number[]; // JSON array of timestamps
+  total_play_time: number;
+  last_viewed: Date;
+}
+
+interface ImageAnalytics {
+  id: number;
+  file_id: number;
+  view_count: number;
+  zoom_count: number;
+  last_viewed: Date | null;
+}
+
+interface AudioAnalytics {
+  id: number;
+  file_id: number;
+  play_count: number;
+  skips: number[]; // JSON array
+  total_play_time: number;
+  last_viewed: Date | null;
+}
+
+interface TextAnalytics {
+  id: number;
+  file_id: number;
+  view_count: number;
+  scroll_count: number;
+  last_viewed: Date | null;
+}
+
+interface Like {
+  id: number;
+  file_id: number;
+  timestamp: number;
+  created_at: Date;
+}
+
+interface FileTag {
+  file_id: number;
+  tag_id: number;
+}
+
+// API Request/Response types
+interface AnalyticsRequest {
+  videoPath: string;
+  playCount?: number;
+  skips?: number[];
+}
+
+interface ImageAnalyticsRequest {
+  imagePath: string;
+  viewCount?: number;
+  zoomInteractions?: number;
+}
+
+interface TagRequest {
+  name: string;
+  tag_group?: string;
+  color?: string;
+}
+
+interface LikeRequest {
+  fileId: string;
+  timestamp: number;
+}

@@ -6,7 +6,7 @@
         <app-tag
           *ngFor="let tag of groupedTags[group]"
           [tag]="tag"
-          [fileId]="currentFile"
+          [fileId]="currentFile.id"
           [canRemove]="false"
           [canAdd]="true"
         ></app-tag>

@@ -1,7 +1,8 @@
 import { NgIf } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { Tag, TagService } from '../../services/tag.service';
+import { Tag } from '../../models/tag.model';
+import { TagService } from '../../services/tag.service';
 
 @Component({
   selector: 'app-tag',
@@ -11,7 +12,7 @@ import { Tag, TagService } from '../../services/tag.service';
 })
 export class TagComponent {
   @Input() tag!: Tag; // Tag data to display
-  @Input() fileId: string | null = null; // Current file to add/remove tag
+  @Input() fileId: number | null = null; // Current file to add/remove tag
   @Input() canRemove = true; // If the tag can be removed
   @Input() canAdd = true; // If the tag can be removed
 

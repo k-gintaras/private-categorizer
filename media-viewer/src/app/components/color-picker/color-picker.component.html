@@ -1,0 +1,47 @@
+<div class="color-picker">
+  <h2>Color Picker</h2>
+
+  <!-- Dropdown to select a color palette -->
+  <div class="palette-selector">
+    <label for="palette-select">Select Palette:</label>
+    <select
+      id="palette-select"
+      [(ngModel)]="selectedPaletteId"
+      (ngModelChange)="onPaletteChange()"
+    >
+      <option *ngFor="let palette of availablePalettes" [value]="palette.id">
+        {{ palette.name }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Display current color and palette info -->
+  <div class="current-info" *ngIf="selectedPalette">
+    <p><strong>Palette:</strong> {{ selectedPalette.name }}</p>
+    <p>
+      <strong>Current Color:</strong>
+      <span
+        class="color-preview large"
+        [style.backgroundColor]="currentColor"
+      ></span>
+      {{ currentColor }}
+    </p>
+  </div>
+
+  <!-- Display all colors in the current palette -->
+  <div class="color-palette" *ngIf="selectedPalette">
+    <div
+      class="color-box"
+      *ngFor="let color of selectedPalette.colors"
+      [style.backgroundColor]="color"
+      [class.active]="color === currentColor"
+      (click)="selectColor(color)"
+    ></div>
+  </div>
+
+  <!-- Controls to navigate colors -->
+  <div class="controls" *ngIf="selectedPalette">
+    <button (click)="nextColor()">Next Color</button>
+    <button (click)="randomColor()">Random Color</button>
+  </div>
+</div>

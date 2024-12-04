@@ -1,0 +1,98 @@
+interface DBFile {
+  id: number;
+  parent_id: number | null;
+  path: string;
+  type: string;
+  size: number | null;
+  last_modified: Date | null;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+}
+
+interface MediaServer {
+  files: {
+    getAll(): Promise<DBFile[]>;
+    getStatic(path: string): Promise<Buffer>;
+  };
+
+  // Rest stays the same
+  likes: {
+    add(data: {
+      fileId: string;
+      timestamp: number;
+    }): Promise<{ id: number }>;
+    
+    getByFileId(fileId: string): Promise<{
+      id: number;
+      file_id: string;
+      timestamp: number;
+      created_at: Date;
+    }[]>;
+  };
+
+  analytics: {
+    video: {
+      update(data: {
+        videoPath: string;
+        playCount?: number;
+        skips?: number[];
+      }): Promise<{
+        message: string;
+        changes: number;
+      }>;
+
+      get(videoPath: string): Promise<{
+        file_id: string;
+        play_count: number;
+        skips: number[];
+        last_viewed: Date | null;
+      }>;
+    };
+
+    image: {
+      update(data: {
+        imagePath: string;
+        viewCount?: number;
+        zoomInteractions?: number;
+      }): Promise<{
+        message: string;
+        changes: number;
+      }>;
+    };
+  };
+
+  tags: {
+    getAll(): Promise<Tag[]>;
+    
+    create(data: {
+      name: string;
+      tag_group?: string;
+      color?: string;
+    }): Promise<Tag>;
+    
+    update(id: number, data: {
+      name: string;
+      tag_group?: string;
+      color?: string;
+    }): Promise<Tag>;
+    
+    delete(id: number): Promise<void>;
+  };
+
+  fileTags: {
+    getByFile(filePath: string): Promise<number[]>;
+    
+    addToFile(filePath: string, data: {
+      tagId: number;
+    }): Promise<{ message: string }>;
+    
+    removeFromFile(filePath: string, tagId: number): Promise<void>;
+  };
+}
+
+interface ErrorResponse {
+  error: string;
+  message?: string;
+}
+
+type ApiResponse<T> = T | ErrorResponse;

@@ -1,5 +1,6 @@
 import { NgIf } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { FileInfo } from '../../../models/file.model';
 
 @Component({
   selector: 'app-image-view',
@@ -8,9 +9,9 @@ import { Component, Input } from '@angular/core';
   styleUrl: './image-view.component.scss',
 })
 export class ImageViewComponent {
-  @Input() filePath!: string | null; // Receives the selected file path
+  @Input() fileInfo!: FileInfo | null; // Receives the selected file path
 
-  isImage(filePath: string): boolean {
-    return /\.(jpg|jpeg|png|gif|bmp)$/i.test(filePath);
+  isImage(f: FileInfo): boolean {
+    return /\.(jpg|jpeg|png|gif|bmp)$/i.test(f.path);
   }
 }

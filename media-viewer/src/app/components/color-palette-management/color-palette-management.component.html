@@ -1,0 +1,22 @@
+<div>
+  <h2>Color Palettes</h2>
+  <div *ngFor="let palette of colorPalettes">
+    <h3>{{ palette.name }}</h3>
+    <div class="colors">
+      <span
+        *ngFor="let color of palette.colors"
+        [style.background-color]="color"
+        class="color-box"
+      ></span>
+    </div>
+    <button (click)="deletePalette(palette.id)">Delete</button>
+  </div>
+
+  <h2>Add New Palette</h2>
+  <input type="text" placeholder="Palette Name" [(ngModel)]="newPaletteName" />
+  <textarea
+    placeholder="Enter colors, comma-separated (e.g., #FF0000, #00FF00)"
+    [(ngModel)]="newPaletteColors"
+  ></textarea>
+  <button (click)="addPalette()">Add Palette</button>
+</div>

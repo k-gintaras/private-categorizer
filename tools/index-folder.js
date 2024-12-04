@@ -1,207 +1,134 @@
-const path = require('path');
-const cors = require('cors');
-const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const path = require('path');
 
-const app = express();
+// Load environment variables
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-// Environment variables
-const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static';
-const FILE_DB_PATH = process.env.FILE_DB_PATH || './file_paths.db';
-const PORT = process.env.MEDIA_SERVER_PORT || 3000;
+// Configurations
+const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static'; // Root folder to scan
+const DB_PATH = path.join(ROOT_DIRECTORY, 'file_paths.db'); // Database stored inside the root folder
+const INIT_SQL_PATH = path.join(__dirname, 'init-db.sql'); // Schema initialization file
 
-// Initialize database connections
-let db;
-try {
-  db = new sqlite3.Database(FILE_DB_PATH, (err) => {
-    if (err) {
-      console.error('Error connecting to database:', err);
-      process.exit(1);
-    }
-    console.log('Connected to database successfully');
-  });
-} catch (err) {
-  console.error('Failed to initialize database:', err);
+console.log(`Database will be initialized at: ${DB_PATH}`);
+
+// Ensure the database folder exists
+if (!fs.existsSync(ROOT_DIRECTORY)) {
+  console.error(`Root directory does not exist: ${ROOT_DIRECTORY}`);
   process.exit(1);
 }
 
-// Enable CORS and JSON parsing
-app.use(cors());
-app.use(express.json());
-
-// Serve static files with logging
-app.use(
-  '/static',
-  (req, res, next) => {
-    console.log('Serving static file:', req.path);
-    next();
-  },
-  express.static(ROOT_DIRECTORY)
-);
-
-// -------------------------
-// Files API
-// -------------------------
-
-app.get('/files', (req, res) => {
-  const sql = 'SELECT * FROM files';
-  db.all(sql, [], (err, rows) => {
-    if (err) {
-      console.error('Database error:', err);
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(rows);
-  });
+// Initialize SQLite Database
+const db = new sqlite3.Database(DB_PATH, (err) => {
+  if (err) {
+    console.error('Error opening database:', err.message);
+    process.exit(1);
+  }
+  console.log('Connected to the SQLite database');
 });
 
-// -------------------------
-// File Tags API
-// -------------------------
-
-// Get tags associated with a file
-app.get('/files/:fileId/tags', (req, res) => {
-  const { fileId } = req.params;
-  const sql = `
-    SELECT t.id, t.name, t.tag_group, t.color
-    FROM file_tags ft
-    JOIN tags t ON ft.tag_id = t.id
-    WHERE ft.file_id = ?
-  `;
-  db.all(sql, [fileId], (err, rows) => {
-    if (err) {
-      console.error('Database error:', err);
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(rows);
-  });
-});
-
-// Add a tag to a file
-app.post('/files/:fileId/tags', (req, res) => {
-  const { fileId } = req.params;
-  const { tagId } = req.body;
-
-  if (!tagId) {
-    return res.status(400).json({ error: 'tagId is required' });
+// Function to initialize the database schema
+const setupDatabaseSchema = () => {
+  if (!fs.existsSync(INIT_SQL_PATH)) {
+    console.error(`SQL file not found: ${INIT_SQL_PATH}`);
+    process.exit(1);
   }
 
-  const sql = 'INSERT INTO file_tags (file_id, tag_id) VALUES (?, ?)';
-  db.run(sql, [fileId, tagId], function (err) {
+  const sql = fs.readFileSync(INIT_SQL_PATH, 'utf-8');
+  db.exec(sql, (err) => {
     if (err) {
-      console.error('Database error:', err);
-      res.status(500).json({ error: err.message });
-      return;
+      console.error('Failed to execute database schema:', err.message);
+    } else {
+      console.log('Database schema initialized successfully.');
     }
-    res.status(201).json({ id: this.lastID, fileId, tagId });
   });
-});
+};
 
-// Remove a tag from a file
-app.delete('/files/:fileId/tags/:tagId', (req, res) => {
-  const { fileId, tagId } = req.params;
+// Define file extensions for each category (added more subtypes)
+const videoExtensions = ['.mp4', '.avi', '.mkv', '.mov', '.wmv'];
+const audioExtensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg'];
+const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'];
+const textExtensions = ['.txt', '.md', '.pdf', '.docx', '.rtf'];
+const archiveExtensions = ['.zip', '.tar', '.rar', '.7z', '.gz'];
+const spreadsheetExtensions = ['.xls', '.xlsx', '.csv'];
+const presentationExtensions = ['.ppt', '.pptx'];
+const codeExtensions = ['.js', '.ts', '.py', '.java', '.cpp', '.html', '.css', '.json'];
+const databaseExtensions = ['.db', '.sqlite', '.mdb'];
+const fontExtensions = ['.ttf', '.otf', '.woff', '.woff2'];
 
-  const sql = 'DELETE FROM file_tags WHERE file_id = ? AND tag_id = ?';
-  db.run(sql, [fileId, tagId], function (err) {
-    if (err) {
-      console.error('Database error:', err);
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'Tag not found for this file' });
-    }
-    res.status(204).send(); // No content
-  });
-});
+// Function to get the file subtype based on the extension
+function getFileSubtype(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
 
-// -------------------------
-// Tags API
-// -------------------------
-
-app.get('/tags', (req, res) => {
-  db.all('SELECT * FROM tags', [], (err, rows) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(rows);
-  });
-});
-
-app.post('/tags', (req, res) => {
-  const { name, tag_group, color } = req.body;
-
-  if (!name) {
-    return res.status(400).json({ error: 'name is required' });
+  if (videoExtensions.includes(ext)) {
+    return 'video';
+  } else if (audioExtensions.includes(ext)) {
+    return 'audio';
+  } else if (imageExtensions.includes(ext)) {
+    return 'image';
+  } else if (textExtensions.includes(ext)) {
+    return 'text';
+  } else if (archiveExtensions.includes(ext)) {
+    return 'archive';
+  } else if (spreadsheetExtensions.includes(ext)) {
+    return 'spreadsheet';
+  } else if (presentationExtensions.includes(ext)) {
+    return 'presentation';
+  } else if (codeExtensions.includes(ext)) {
+    return 'code';
+  } else if (databaseExtensions.includes(ext)) {
+    return 'database';
+  } else if (fontExtensions.includes(ext)) {
+    return 'font';
+  } else {
+    return 'unknown'; // If no match, categorize as 'unknown'
   }
+}
 
-  db.run('INSERT INTO tags (name, tag_group, color) VALUES (?, ?, ?)', [name, tag_group, color], function (err) {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.status(201).json({
-      id: this.lastID,
-      name,
-      tag_group,
-      color,
+// Function to scan directories and index files
+const scanDirectory = (dir, parentId = null) => {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+  entries.forEach((entry) => {
+    const fullPath = path.join(dir, entry.name);
+    const normalizedRoot = path.resolve(ROOT_DIRECTORY).replace(/\\/g, '/');
+    const normalizedFullPath = path.resolve(fullPath).replace(/\\/g, '/');
+    const relativePath = normalizedFullPath.replace(normalizedRoot, '');
+    const type = entry.isDirectory() ? 'directory' : 'file';
+    const subtype = type === 'file' ? getFileSubtype(fullPath) : null; // Only assign subtype to files
+
+    const stats = fs.statSync(fullPath);
+    const size = type === 'file' ? stats.size : null;
+    const lastModified = stats.mtime.toISOString();
+
+    // Insert file or directory into the database
+    db.run(`INSERT INTO files (path, type, parent_id, size, last_modified, subtype) VALUES (?, ?, ?, ?, ?, ?)`, [relativePath, type, parentId, size, lastModified, subtype], function (err) {
+      if (err) {
+        console.error(`Failed to insert ${relativePath}:`, err.message);
+      } else {
+        const newParentId = this.lastID; // Get the ID of the inserted entry
+
+        // Recurse if the entry is a directory
+        if (type === 'directory') {
+          scanDirectory(fullPath, newParentId);
+        }
+      }
     });
   });
-});
+};
 
-app.put('/tags/:id', (req, res) => {
-  const { id } = req.params;
-  const { name, tag_group, color } = req.body;
+// Main function
+const initialize = () => {
+  console.log('Setting up the database schema...');
+  setupDatabaseSchema();
 
-  if (!name) {
-    return res.status(400).json({ error: 'name is required' });
-  }
+  console.log(`Scanning Root Directory: ${ROOT_DIRECTORY}`);
+  scanDirectory(ROOT_DIRECTORY);
 
-  db.run('UPDATE tags SET name = ?, tag_group = ?, color = ? WHERE id = ?', [name, tag_group, color, id], function (err) {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'Tag not found' });
-    }
-    res.json({ id, name, tag_group, color });
-  });
-});
-
-app.delete('/tags/:id', (req, res) => {
-  const { id } = req.params;
-
-  db.run('DELETE FROM tags WHERE id = ?', [id], function (err) {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'Tag not found' });
-    }
-    res.status(204).send();
-  });
-});
-
-// -------------------------
-// Start the server
-// -------------------------
-
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Files database: ${FILE_DB_PATH}`);
-  console.log(`Root directory: ${ROOT_DIRECTORY}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Closing database connections...');
   db.close(() => {
-    console.log('Database connections closed. Exiting...');
-    process.exit(0);
+    console.log('Database setup and indexing completed.');
   });
-});
+};
+
+// Run the script
+initialize();

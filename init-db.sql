@@ -15,45 +15,27 @@ CREATE TABLE IF NOT EXISTS colors (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Analytics for video files
-CREATE TABLE IF NOT EXISTS video_analytics (
+-- Analytics 
+CREATE TABLE analytics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    file_id INTEGER NOT NULL, -- Links to files table
-    play_count INTEGER DEFAULT 0,
-    skips TEXT DEFAULT '[]', -- JSON-encoded array to store skip timestamps
-    total_play_time INTEGER DEFAULT 0, -- Total playtime in seconds
-    last_viewed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    file_id INTEGER NOT NULL, -- Foreign key to files table
+    file_type TEXT NOT NULL, -- 'video', 'audio', 'image', 'text'
+    last_viewed TIMESTAMP DEFAULT NULL, -- Common to all types
+    total_watch_time INTEGER DEFAULT 0, -- Common to all types
+    view_count INTEGER DEFAULT 0, -- Common to all types
+    skips TEXT DEFAULT NULL, -- JSON array for video/audio skips
+    scroll_up_count INTEGER DEFAULT NULL, -- For image/text
+    scroll_down_count INTEGER DEFAULT NULL, -- For image/text
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
 );
 
--- Analytics for image files
-CREATE TABLE IF NOT EXISTS image_analytics (
+CREATE TABLE IF NOT EXISTS likes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    file_id INTEGER NOT NULL, -- Links to files table
-    view_count INTEGER DEFAULT 0,
-    zoom_count INTEGER DEFAULT 0, -- Number of zoom interactions
-    last_viewed TIMESTAMP DEFAULT NULL,
-    FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
-);
-
--- Analytics for audio files
-CREATE TABLE IF NOT EXISTS audio_analytics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    file_id INTEGER NOT NULL, -- Links to files table
-    play_count INTEGER DEFAULT 0,
-    skips TEXT DEFAULT '[]', -- JSON-encoded array to store skip timestamps
-    total_play_time INTEGER DEFAULT 0, -- Total playtime in seconds
-    last_viewed TIMESTAMP DEFAULT NULL,
-    FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
-);
-
--- Analytics for text and document files
-CREATE TABLE IF NOT EXISTS text_analytics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    file_id INTEGER NOT NULL, -- Links to files table
-    view_count INTEGER DEFAULT 0,
-    scroll_count INTEGER DEFAULT 0, -- Number of scroll interactions
-    last_viewed TIMESTAMP DEFAULT NULL,
+    file_id INTEGER NOT NULL, -- Links to the files table
+    timestamp INTEGER NOT NULL, -- Time (in seconds) of the like within the media
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the like was added
     FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
 );
 
@@ -62,6 +44,7 @@ CREATE TABLE IF NOT EXISTS files (
     parent_id INTEGER,
     path TEXT NOT NULL UNIQUE,
     type TEXT NOT NULL,
+    subtype TEXT NOT NULL,
     size INTEGER,
     last_modified TIMESTAMP,
     metadata TEXT DEFAULT '{}',

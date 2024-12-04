@@ -1,6 +1,15 @@
-<video
-  #videoPlayer
-  class="video-js vjs-default-skin"
-  controls
-  preload="auto"
-></video>
+<div class="video-container">
+  <video
+    #videoPlayer
+    class="video-js vjs-default-skin"
+    controls
+    preload="auto"
+  ></video>
+</div>
+<!-- <div class="video-controls">
+  <button class="control-button" (click)="playPrevious()">Previous</button>
+  <button class="control-button" (click)="skipVideo(30)">+30s</button>
+  <button class="control-button" (click)="skipVideo(60)">+60s</button>
+  <button class="control-button" (click)="skipVideo(300)">+5m</button>
+  <button class="control-button" (click)="playNextRandom()">Next Random</button>
+</div> -->

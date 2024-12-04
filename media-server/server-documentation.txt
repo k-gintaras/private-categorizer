@@ -1,0 +1,75 @@
+Media Server API Documentation
+A Node.js/Express server for managing media files with analytics, tags, and likes.
+Configuration
+Environment variables:
+
+ROOT_DIRECTORY: Static files location (default: './static')
+FILE_DB_PATH: SQLite database path (default: './file_ids.db')
+MEDIA_SERVER_PORT: Server port (default: 3000)
+
+API Endpoints
+Files
+
+GET /files - List all files
+GET /static/* - Serve static files
+
+Likes
+
+POST /likes - Add like
+
+Body: { fileId: string, timestamp: number }
+
+
+GET /likes/:fileId - Get likes for file
+
+Video Analytics
+
+POST /analytics - Update video analytics
+
+Body: { videoPath: string, playCount?: number, skips?: any[] }
+
+
+GET /analytics/:videoPath - Get video analytics
+
+Image Analytics
+
+POST /analytics/image - Update image analytics
+
+Body: { imagePath: string, viewCount?: number, zoomInteractions?: number }
+
+
+
+Tags
+
+GET /tags - List all tags
+POST /tags - Create tag
+
+Body: { name: string, tag_group?: string, color?: string }
+
+
+PUT /tags/:id - Update tag
+
+Body: Same as POST
+
+
+DELETE /tags/:id - Delete tag
+
+File Tags
+
+GET /files/:filePath/tags - Get tags for file
+POST /files/:filePath/tags - Add tag to file
+
+Body: { tagId: number }
+
+
+DELETE /files/:filePath/tags/:tagId - Remove tag from file
+
+Database Schema
+Tables:
+
+files: File metadata
+likes: File likes with timestamps
+video_analytics: Video view tracking
+image_analytics: Image view tracking
+tags: Tag definitions
+file_tags: File-tag relationships

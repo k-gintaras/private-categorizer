@@ -2,7 +2,7 @@
   <app-tag
     *ngFor="let tag of fileTags"
     [tag]="tag"
-    [fileId]="currentFile"
+    [fileId]="currentFile?.id ?? null"
     [canRemove]="true"
     [canAdd]="false"
   ></app-tag>

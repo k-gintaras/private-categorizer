@@ -6,7 +6,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { NgIf } from '@angular/common';
+import { MatSelectModule } from '@angular/material/select';
+import { NgIf, NgFor } from '@angular/common';
+import { ApiConfigService } from '../../../services/api-config.service';
+import { ColorService } from '../../../services/color.service';
+import { ColorPalette } from '../../../models/color.model';
+import { ColorPaletteService } from '../../../services/color-palette.service';
+import { ColorPickerComponent } from '../../../components/color-picker/color-picker.component';
 
 interface Tag {
   id: number;
@@ -25,7 +31,9 @@ interface Tag {
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     FormsModule,
+    ColorPickerComponent,
   ],
   templateUrl: './tag-manager.component.html',
   styleUrls: ['./tag-manager.component.scss'],
@@ -46,36 +54,65 @@ export class TagManagerComponent implements OnInit {
   };
   editingTag: boolean = false;
 
-  constructor(private http: HttpClient) {}
+  // Palettes and colors for color picker
+  palettes: ColorPalette[] = [];
+  selectedColor: string = '#ffffff';
+
+  constructor(
+    private http: HttpClient,
+    private apiConfig: ApiConfigService,
+    private colorService: ColorService,
+    private colorPaletteService: ColorPaletteService
+  ) {}
 
   ngOnInit(): void {
     this.fetchTags();
+    this.fetchColor();
+  }
+
+  fetchColor() {
+    this.colorService.currentColor$.subscribe((c) => {
+      if (!c) return;
+      this.selectedColor = c;
+    });
   }
 
   fetchTags(): void {
-    this.http.get<Tag[]>('http://localhost:3000/tags').subscribe((data) => {
+    const url = this.apiConfig.getApiTagsUrl(); // Use ApiConfigService
+    this.http.get<Tag[]>(url).subscribe((data) => {
       this.tags = new MatTableDataSource<Tag>(data); // Initialize with fetched data
     });
   }
 
   saveTag(): void {
-    if (this.editingTag) {
-      this.http
-        .put(`http://localhost:3000/tags/${this.form.id}`, this.form)
-        .subscribe(() => {
-          this.fetchTags();
-          this.resetForm();
-        });
-    } else {
-      this.http.post('http://localhost:3000/tags', this.form).subscribe(() => {
-        this.fetchTags();
-        this.resetForm();
+    this.form.color = this.selectedColor; // Use the currently selected color
+    const url = this.form.id
+      ? `${this.apiConfig.getApiTagsUrl()}/${this.form.id}`
+      : this.apiConfig.getApiTagsUrl();
+
+    const request = this.form.id
+      ? this.http.put(url, this.form)
+      : this.http.post(url, this.form);
+
+    request.subscribe(() => {
+      this.fetchTags();
+      this.resetSomeForm();
+
+      // Move to the next color after saving
+      this.colorService.getNextColor();
+
+      // Ensure the new color is reflected in `selectedColor`
+      this.colorService.currentColor$.subscribe((color) => {
+        if (color) {
+          this.selectedColor = color;
+        }
       });
-    }
+    });
   }
 
   editTag(tag: Tag): void {
     this.form = { ...tag };
+    this.selectedColor = tag.color; // Set the selected color
     this.editingTag = true;
   }
 
@@ -84,11 +121,10 @@ export class TagManagerComponent implements OnInit {
   }
 
   deleteTag(tagId: number): void {
-    if (confirm('Are you sure you want to delete this tag?')) {
-      this.http.delete(`http://localhost:3000/tags/${tagId}`).subscribe(() => {
-        this.fetchTags();
-      });
-    }
+    const url = `${this.apiConfig.getApiTagsUrl()}/${tagId}`;
+    this.http.delete(url).subscribe(() => {
+      this.fetchTags();
+    });
   }
 
   resetForm(): void {
@@ -98,6 +134,18 @@ export class TagManagerComponent implements OnInit {
       tag_group: '',
       color: '#ffffff',
     };
+    this.selectedColor = '#ffffff';
+    this.editingTag = false;
+  }
+
+  resetSomeForm(): void {
+    this.form = {
+      id: null,
+      name: '',
+      tag_group: this.form.tag_group,
+      color: '#ffffff',
+    };
+    this.selectedColor = '#ffffff';
     this.editingTag = false;
   }
 }

@@ -1,0 +1,47 @@
+.color-picker {
+  .palette-selector {
+    margin-bottom: 1rem;
+  }
+
+  .current-info {
+    margin-bottom: 1rem;
+
+    .color-preview {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 0.5rem;
+      border: 1px solid #000;
+
+      &.large {
+        width: 30px;
+        height: 30px;
+      }
+    }
+  }
+
+  .color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    .color-box {
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      border: 1px solid #000;
+
+      &.active {
+        border-color: #ff0000;
+      }
+    }
+  }
+
+  .controls {
+    margin-top: 1rem;
+
+    button {
+      margin-right: 0.5rem;
+    }
+  }
+}

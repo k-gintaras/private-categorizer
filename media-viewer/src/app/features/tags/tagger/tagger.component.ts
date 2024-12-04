@@ -3,26 +3,19 @@ import { Subscription } from 'rxjs';
 import { SelectedFileService } from '../../../services/selected-file.service';
 import { GroupedTags, TagService } from '../../../services/tag.service';
 import { NgFor, NgIf } from '@angular/common';
-import { MatChipListbox, MatChipOption } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { TagComponent } from '../../../components/tag/tag.component';
+import { FileInfo } from '../../../models/file.model';
 
 @Component({
   selector: 'app-tagger',
   standalone: true,
-  imports: [
-    NgFor,
-    NgIf,
-    MatChipListbox,
-    MatChipOption,
-    MatIconModule,
-    TagComponent,
-  ],
+  imports: [NgFor, NgIf, MatIconModule, TagComponent],
   templateUrl: './tagger.component.html',
   styleUrls: ['./tagger.component.scss'],
 })
 export class TaggerComponent implements OnInit, OnDestroy {
-  currentFile: string | null = null;
+  currentFile: FileInfo | null = null;
   groupedTags: GroupedTags = {};
   private fileSubscription?: Subscription;
 
@@ -46,7 +39,7 @@ export class TaggerComponent implements OnInit, OnDestroy {
 
   addTag(tagId: number): void {
     if (this.currentFile) {
-      this.tagService.addTagToFile(this.currentFile, tagId).subscribe({
+      this.tagService.addTagToFile(this.currentFile.id, tagId).subscribe({
         next: () => console.log('Tag added successfully'),
         error: (error) => console.error('Error adding tag:', error),
       });
