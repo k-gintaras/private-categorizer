@@ -8,7 +8,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 // Configurations
 const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static'; // Root folder to scan
 const DB_PATH = path.join(ROOT_DIRECTORY, 'file_paths.db'); // Database stored inside the root folder
-const INIT_SQL_PATH = path.join(__dirname, 'init-db.sql'); // Schema initialization file
+const INIT_SQL_PATH = path.join(__dirname, '../init-db.sql'); // Schema initialization file
 
 console.log(`Database will be initialized at: ${DB_PATH}`);
 
@@ -86,6 +86,36 @@ function getFileSubtype(filePath) {
 }
 
 // Function to scan directories and index files
+// const scanDirectory = (dir, parentId = null) => {
+//   const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+//   entries.forEach((entry) => {
+//     const fullPath = path.join(dir, entry.name);
+//     const normalizedRoot = path.resolve(ROOT_DIRECTORY).replace(/\\/g, '/');
+//     const normalizedFullPath = path.resolve(fullPath).replace(/\\/g, '/');
+//     const relativePath = normalizedFullPath.replace(normalizedRoot, '');
+//     const type = entry.isDirectory() ? 'directory' : 'file';
+//     const subtype = type === 'file' ? getFileSubtype(fullPath) : null; // Only assign subtype to files
+
+//     const stats = fs.statSync(fullPath);
+//     const size = type === 'file' ? stats.size : null;
+//     const lastModified = stats.mtime.toISOString();
+
+//     // Insert file or directory into the database
+//     db.run(`INSERT INTO files (path, type, parent_id, size, last_modified, subtype) VALUES (?, ?, ?, ?, ?, ?)`, [relativePath, type, parentId, size, lastModified, subtype], function (err) {
+//       if (err) {
+//         console.error(`Failed to insert ${relativePath}:`, err.message);
+//       } else {
+//         const newParentId = this.lastID; // Get the ID of the inserted entry
+
+//         // Recurse if the entry is a directory
+//         if (type === 'directory') {
+//           scanDirectory(fullPath, newParentId);
+//         }
+//       }
+//     });
+//   });
+// };
 const scanDirectory = (dir, parentId = null) => {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -101,17 +131,30 @@ const scanDirectory = (dir, parentId = null) => {
     const size = type === 'file' ? stats.size : null;
     const lastModified = stats.mtime.toISOString();
 
-    // Insert file or directory into the database
-    db.run(`INSERT INTO files (path, type, parent_id, size, last_modified, subtype) VALUES (?, ?, ?, ?, ?, ?)`, [relativePath, type, parentId, size, lastModified, subtype], function (err) {
+    // Check if the path already exists in the database
+    db.get(`SELECT id FROM files WHERE path = ?`, [relativePath], (err, row) => {
       if (err) {
-        console.error(`Failed to insert ${relativePath}:`, err.message);
-      } else {
-        const newParentId = this.lastID; // Get the ID of the inserted entry
-
-        // Recurse if the entry is a directory
+        console.error(`Database error for ${relativePath}:`, err.message);
+      } else if (row) {
+        console.log(`Path already exists, continuing scan: ${relativePath}`);
         if (type === 'directory') {
-          scanDirectory(fullPath, newParentId);
+          // Continue scanning the directory using the existing ID
+          scanDirectory(fullPath, row.id);
         }
+      } else {
+        // Insert the new file or directory
+        db.run(`INSERT INTO files (path, type, parent_id, size, last_modified, subtype) VALUES (?, ?, ?, ?, ?, ?)`, [relativePath, type, parentId, size, lastModified, subtype], function (err) {
+          if (err) {
+            console.error(`Failed to insert ${relativePath}:`, err.message);
+          } else {
+            const newParentId = this.lastID; // Get the ID of the inserted entry
+
+            // Recurse if the entry is a directory
+            if (type === 'directory') {
+              scanDirectory(fullPath, newParentId);
+            }
+          }
+        });
       }
     });
   });

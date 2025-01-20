@@ -13,14 +13,13 @@ import { LikeComponent } from '../../components/like/like.component';
 
 @Component({
   selector: 'app-view-videos',
+  standalone: true,
   imports: [
     ImageViewComponent,
     VideoViewComponent,
     FileListComponent,
     NgIf,
     TaggerComponent,
-    TagsComponent,
-    TagsComponent,
     VideoControlsComponent,
     LikeComponent,
     LikeComponent,
@@ -37,6 +36,7 @@ export class ViewVideosComponent implements OnInit {
   toggleFileList(): void {
     this.isFileListVisible = !this.isFileListVisible;
   }
+
   ngOnInit(): void {
     // Subscribe to the selected file from the FileTrackerService
     this.fileTracker.selectedFile$.subscribe((f) => {

@@ -1,0 +1,26 @@
+services:
+  media-server:
+    build:
+      context: ./media-server
+      dockerfile: Dockerfile
+    environment:
+      - IS_DOCKER=true
+    volumes:
+      - 'D:/Old Files:/mnt/ssd'
+    ports:
+      - '4000:4000'
+    command: >
+      sh -c "node /app/scripts/configure-env.js > /tmp/env && . /tmp/env && node /app/server.js"
+
+    env_file:
+      - .env
+
+  media-viewer:
+    build:
+      context: .
+      dockerfile: ./media-viewer/Dockerfile
+    ports:
+      - '5000:5000'
+    volumes:
+      # This ensures the `dist` folder is mapped correctly in the container.
+      - ./media-viewer/dist/media-viewer/browser:/app/dist:ro

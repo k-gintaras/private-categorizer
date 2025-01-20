@@ -23,7 +23,7 @@ export class TagComponent {
 
     if (!this.canAdd) return;
     if (this.fileId) {
-      this.tagService.addTagToFile(this.fileId, this.tag.id).subscribe({
+      this.tagService.associateTagWithFile(this.fileId, this.tag.id).subscribe({
         next: () => console.log(`Tag "${this.tag.name}" added to file.`),
         error: (err) =>
           console.error(`Failed to add tag "${this.tag.name}":`, err),

@@ -1,8 +1,4 @@
-<div
-  class="tag"
-  [style.background-color]="tag.color"
-  (click)="onTagClick($event)"
->
+<div class="tag" (click)="onTagClick($event)">
   <span class="tag-text">{{ tag.name }}</span>
   <button
     *ngIf="canRemove"

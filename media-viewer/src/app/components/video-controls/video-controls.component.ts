@@ -59,6 +59,7 @@ export class VideoControlsComponent {
    */
   playNextRandom(): void {
     this.randomNextService.playNextRandom();
+    // this.skipVideo(30);
   }
 
   /**

@@ -1,0 +1,12 @@
+node_modules/
+package-lock.json
+npm-debug.log
+.env
+*.sock
+.DS_Store
+Thumbs.db
+*.log
+*.zip
+node_modules
+!.env
+!.nginx.conf

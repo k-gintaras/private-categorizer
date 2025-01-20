@@ -3,7 +3,12 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ApiConfigService } from './api-config.service';
 import { FileInfo } from '../models/file.model';
-import { BaseAnalytics, Like } from '../models/analytics.model';
+import {
+  BaseAnalytics,
+  Dislike,
+  Favorite,
+  Like,
+} from '../models/analytics.model';
 import { Tag } from '../models/tag.model';
 
 @Injectable({
@@ -93,6 +98,23 @@ export class FileCacheService {
       this.updateFile(file);
     }
   }
+
+  updateFavorite(fileId: number, favorite: Favorite | null): void {
+    const file = this.filesCache.find((file) => file.id === fileId);
+    if (file) {
+      file.favorite = favorite;
+      this.updateFile(file);
+    }
+  }
+
+  updateDislikes(fileId: number, updatedDislikes: Dislike[]) {
+    const file = this.filesCache.find((file) => file.id === fileId);
+    if (file) {
+      file.dislikes = updatedDislikes;
+      this.updateFile(file);
+    }
+  }
+
   /**
    * Update the likes of a specific file.
    */

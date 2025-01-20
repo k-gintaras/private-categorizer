@@ -1,7 +1,21 @@
 <div class="video-controls">
-  <button class="control-button" (click)="playPrevious()">Previous</button>
-  <button class="control-button" (click)="skipVideo(30)">+30s</button>
-  <button class="control-button" (click)="skipVideo(60)">+60s</button>
-  <button class="control-button" (click)="skipVideo(300)">+5m</button>
-  <button class="control-button" (click)="playNextRandom()">Next Random</button>
+  <button class="control-button" (click)="playPrevious()" aria-label="Previous">
+    <i class="fas fa-step-backward"></i>[
+  </button>
+  <button class="control-button" (click)="skipVideo(30)" aria-label="+30s">
+    <i class="fas fa-forward"></i>30
+  </button>
+  <button class="control-button" (click)="skipVideo(60)" aria-label="+60s">
+    <i class="fas fa-forward"></i> 60
+  </button>
+  <button class="control-button" (click)="skipVideo(300)" aria-label="+5m">
+    <i class="fas fa-forward"></i> 5m
+  </button>
+  <button
+    class="control-button"
+    (click)="playNextRandom()"
+    aria-label="Next Random"
+  >
+    <i class="fas fa-random"></i>]
+  </button>
 </div>

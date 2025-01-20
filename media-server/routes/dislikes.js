@@ -13,23 +13,20 @@ function roundTimestamp(timestamp, interval = 1) {
 
 module.exports = (db) => {
   /**
-   * Add a new like for a specific file at a specific timestamp.
+   * Add a new dislike for a specific file at a specific timestamp.
    */
   router.post('/', (req, res) => {
     const { fileId, timestamp } = req.body;
 
-    if (timestamp == null) {
-      return res.status(400).json({ error: 'timestamp required' });
+    if (!fileId || timestamp == null) {
+      return res.status(400).json({ error: 'fileId and timestamp are required' });
     }
 
     const roundedTimestamp = roundTimestamp(timestamp);
 
-    db.run('INSERT INTO likes (file_id, timestamp) VALUES (?, ?)', [fileId, roundedTimestamp], function (err) {
+    db.run('INSERT INTO dislikes (file_id, timestamp) VALUES (?, ?)', [fileId, roundedTimestamp], function (err) {
       if (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
-          return res.status(409).json({ error: 'Duplicate like not allowed.' });
-        }
-        console.error('Error adding like:', err);
+        console.error('Error adding dislike:', err);
         return res.status(500).json({ error: err.message });
       }
 
@@ -38,7 +35,7 @@ module.exports = (db) => {
   });
 
   /**
-   * Fetch all likes for a specific file.
+   * Fetch all dislikes for a specific file.
    */
   router.get('/:fileId', (req, res) => {
     const { fileId } = req.params;
@@ -47,9 +44,9 @@ module.exports = (db) => {
       return res.status(400).json({ error: 'fileId is required' });
     }
 
-    db.all('SELECT * FROM likes WHERE file_id = ? ORDER BY timestamp ASC', [fileId], (err, rows) => {
+    db.all('SELECT * FROM dislikes WHERE file_id = ? ORDER BY timestamp ASC', [fileId], (err, rows) => {
       if (err) {
-        console.error('Error fetching likes:', err);
+        console.error('Error fetching dislikes:', err);
         return res.status(500).json({ error: err.message });
       }
 
@@ -58,26 +55,26 @@ module.exports = (db) => {
   });
 
   /**
-   * Remove a like by its ID.
+   * Remove a dislike by its ID.
    */
   router.delete('/:id', (req, res) => {
     const { id } = req.params;
 
     if (!id) {
-      return res.status(400).json({ error: 'Like ID is required' });
+      return res.status(400).json({ error: 'Dislike ID is required' });
     }
 
-    db.run('DELETE FROM likes WHERE id = ?', [id], function (err) {
+    db.run('DELETE FROM dislikes WHERE id = ?', [id], function (err) {
       if (err) {
-        console.error('Error removing like:', err);
+        console.error('Error removing dislike:', err);
         return res.status(500).json({ error: err.message });
       }
 
       if (this.changes === 0) {
-        return res.status(404).json({ error: 'Like not found' });
+        return res.status(404).json({ error: 'Dislike not found' });
       }
 
-      res.status(200).json({ message: 'Like removed successfully' });
+      res.status(200).json({ message: 'Dislike removed successfully' });
     });
   });
 

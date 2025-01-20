@@ -1,4 +1,4 @@
-<div *ngIf="currentFile" class="p-4">
+<!-- <div *ngIf="currentFile" class="p-4">
   <div class="tag-groups">
     <div *ngFor="let group of getTagKeys()" class="tag-group">
       <h4 class="group-title">{{ group }}</h4>
@@ -17,4 +17,43 @@
 
 <div *ngIf="!currentFile" class="p-4 text-gray-500 italic">
   Please select a file to add tags.
+</div> -->
+<!--
+<div class="hidden">
+  <div
+    class="flex flex-wrap gap-1 justify-end flex items-center justify-between p-4 bg-gray-100 rounded-lg shadow-md"
+  ></div>
+  <div class="btn btn-primary"></div>
+  <div class="badge badge-primary badge-xs"></div>
+</div> -->
+
+<div class="tagger">
+  <app-tag-manager
+    *ngIf="items.length > 0"
+    [items]="items"
+    [tagGroups]="tagGroups"
+    (tagAdded)="onTagAdded($event)"
+    (tagRemoved)="onTagRemoved($event)"
+  ></app-tag-manager>
 </div>
+
+<!-- <div class="truncated truncate">
+  dwdwd wdwd wdwd wd wdw dwd wd
+  wwdwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+</div>
+<div class="truncate w-132">
+  This is some very long text that should truncate.
+</div> -->
+
+<!-- <div class="bg-red-500 text-white p-4 rounded">
+  This is a Tailwind test (should be a red box).
+</div>
+<div class="badge badge-primary">
+  This is a DaisyUI badge test (should be styled as a badge).
+</div> -->
+
+<!-- <div class="tabs mb-4 flex gap-0 overflow-hidden">
+  <div *ngFor="let group of items" class="tab flex-1 truncate relative">
+    <span class="truncate">{{ group.name }}</span>
+  </div>
+</div> -->

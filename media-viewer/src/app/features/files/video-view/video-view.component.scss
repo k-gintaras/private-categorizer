@@ -1,49 +1,46 @@
-.video-background {
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  gap: 0; /* Remove gap to avoid extra space */
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}
+
+.viewer-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+
+  .viewer {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border: none; /* Remove border */
+    box-shadow: none; /* Remove shadow */
+    aspect-ratio: 16/9; /* Keep aspect ratio if desired */
+    background-color: #000; /* Black backdrop for video */
+  }
+}
+
+.video-container {
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: black;
+  margin: 0;
+  padding: 0;
 
-  display: flex;
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
-  overflow: hidden; /* Hide overflow if any */
-}
-
-.video-element {
-  position: absolute;
-  min-width: 100%; /* Fill horizontally for horizontal videos */
-  min-height: 100%; /* Fill vertically for vertical videos */
-  object-fit: cover; /* Crop to fit while maintaining aspect ratio */
-}
-
-.video-controls {
-  z-index: 100;
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  gap: 10px; /* Space between buttons */
-  align-items: center;
-}
-
-.control-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.control-button:hover {
-  background-color: #0056b3;
-}
-
-@media (max-width: 768px) {
-  .control-button {
-    font-size: 0.9rem;
-    padding: 8px 16px;
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* or 'cover' if you prefer edge-to-edge */
   }
 }

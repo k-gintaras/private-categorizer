@@ -12,6 +12,10 @@ module.exports = (db) => {
       return res.status(400).json({ error: 'Name and colorPalette are required.' });
     }
 
+    if (!Array.isArray(colorPalette) || !colorPalette.every((color) => typeof color === 'string')) {
+      return res.status(400).json({ error: 'colorPalette must be an array of strings.' });
+    }
+
     db.run(`INSERT INTO colors (name, color_palette) VALUES (?, ?)`, [name, JSON.stringify(colorPalette)], function (err) {
       if (err) {
         console.error('Error adding color palette:', err);
@@ -32,13 +36,26 @@ module.exports = (db) => {
         return res.status(500).json({ error: err.message });
       }
 
-      const palettes = rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        colors: JSON.parse(row.color_palette),
-      }));
+      const palettes = [];
+      const invalidEntries = [];
 
-      res.json(palettes);
+      rows.forEach((row) => {
+        try {
+          palettes.push({
+            id: row.id,
+            name: row.name,
+            colors: JSON.parse(row.color_palette), // Parse JSON safely
+          });
+        } catch (error) {
+          console.warn(`Invalid color_palette for ID ${row.id}:`, row.color_palette);
+          invalidEntries.push({ id: row.id, error: 'Invalid color_palette format.' });
+        }
+      });
+
+      res.json({
+        palettes,
+        ...(invalidEntries.length > 0 && { invalidEntries }), // Include invalid entries if any
+      });
     });
   });
 

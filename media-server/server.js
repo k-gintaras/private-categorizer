@@ -1,21 +1,45 @@
 // server.js
+const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 const cors = require('cors');
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const filesRouter = require('./routes/files');
 const likesRouter = require('./routes/likes');
+const favoritesRouter = require('./routes/favorites');
+const dislikesRouter = require('./routes/dislikes');
 const analyticsRouter = require('./routes/analytics');
 const tagsRouter = require('./routes/tags');
 const colorsRouter = require('./routes/colors');
 
 const app = express();
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+console.log('This is messages from server.js');
+console.log('Environment variables:', process.env);
 
 const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static';
 const FILE_DB_PATH = process.env.FILE_DB_PATH || './file_ids.db';
 const PORT = process.env.MEDIA_SERVER_PORT || 3000;
 
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+console.log(`Root directory env: ${process.env.ROOT_DIRECTORY}`);
+console.log(`Root directory: ${ROOT_DIRECTORY}`);
+console.log(path.resolve(__dirname, '../.env'));
+
+// Check if ROOT_DIRECTORY exists
+if (!fs.existsSync(ROOT_DIRECTORY)) {
+  console.error(`Root directory not found: ${ROOT_DIRECTORY}`);
+  process.exit(1);
+}
+
+// Check if database file exists
+if (!fs.existsSync(FILE_DB_PATH)) {
+  console.error(`Database file not found: ${FILE_DB_PATH}`);
+  process.exit(1);
+}
 // Database initialization
 let db;
 try {
@@ -34,6 +58,7 @@ try {
 app.use(cors());
 app.use(express.json());
 
+// serve static files actual files
 app.use(
   '/static',
   (req, res, next) => {
@@ -46,9 +71,13 @@ app.use(
 // Routes
 app.use('/files', filesRouter(db));
 app.use('/likes', likesRouter(db));
+app.use('/favorites', favoritesRouter(db));
+app.use('/dislikes', dislikesRouter(db));
 app.use('/analytics', analyticsRouter(db));
 app.use('/tags', tagsRouter(db));
 app.use('/colors', colorsRouter(db));
+
+// TODO: gettting colors crash the server
 
 // Error handling
 app.use((err, req, res, next) => {

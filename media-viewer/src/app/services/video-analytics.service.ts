@@ -18,31 +18,32 @@ export class AnalyticsService {
    * Initialize local analytics for a new file.
    */
   initializeLocalAnalytics(file: FileInfo): void {
-    this.localAnalytics = {
+    const base: BaseAnalytics = {
+      id: 0,
+      fileId: file.id, // Use the file's ID
+      fileType: file.subtype, // Use the file's subtype
       lastViewed: new Date().toISOString(),
-      fileId: file.id,
-      fileType: file.subtype,
       totalWatchTime: 0,
       viewCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       skips: [],
     };
+
+    this.localAnalytics = base;
     this.viewStartTime = Date.now();
   }
 
-  initFresh(file: FileInfo) {
+  initFresh(file: FileInfo): void {
     if (!file) return;
 
-    // Save the current analytics for the previously selected file
-    this.saveAnalytics();
+    this.saveAnalytics(); // Save analytics for the current file before switching
 
-    // Reset analytics for the new file
-    this.initializeLocalAnalytics(file);
+    this.initializeLocalAnalytics(file); // Initialize new analytics with correct file data
 
-    // Increment view count for the new file
-    this.incrementViewCount(file.id, file.subtype);
+    this.incrementViewCount(file.id, file.subtype); // Increment view count for the new file
 
-    // Start tracking view time for the new file
-    this.startViewTracking();
+    this.startViewTracking(); // Start tracking view time for the new file
   }
 
   /**
@@ -70,7 +71,8 @@ export class AnalyticsService {
     if (!this.localAnalytics) return;
     if (!this.localAnalytics.skips) return;
     const roundedTime = Math.round(currentTimeInVideo); // Round to nearest second
-    if (roundedTime > 0) this.localAnalytics.skips.push(roundedTime);
+    if (roundedTime > 0)
+      this.localAnalytics.skips.push({ time: roundedTime, count: 1 });
   }
 
   /**
@@ -115,7 +117,13 @@ export class AnalyticsService {
   saveAnalytics(): void {
     this.stopViewTracking(); // Ensure current view time is included
 
-    if (!this.localAnalytics) return;
+    if (
+      !this.localAnalytics ||
+      !this.localAnalytics.fileId ||
+      !this.localAnalytics.fileType
+    ) {
+      return;
+    }
 
     const apiUrl = `${this.apiConfig.getApiBaseUrl()}/analytics/update`;
     const payload = { ...this.localAnalytics, viewCount: 0 };

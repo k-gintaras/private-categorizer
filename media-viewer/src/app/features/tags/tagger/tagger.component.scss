@@ -1,25 +1,3 @@
-.tag-groups {
-  display: grid;
-  grid-template-columns: 150px 1fr; /* Fixed width for titles, flexible space for tags */
-  gap: 0.5rem 1rem; /* Row gap and column gap */
-  align-items: start; /* Align tags with their titles */
-}
-
-.tag-group {
-  display: contents; /* Allows grid items to be placed directly in the grid */
-}
-
-.group-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #4a4a4a;
-  margin: 0;
-  text-align: left;
-  white-space: nowrap; /* Prevent wrapping for titles */
-}
-
-.tag-chips {
-  display: flex;
-  flex-wrap: wrap; /* Allow tags to wrap within their area */
-  gap: 0.25rem; /* Space between individual tags */
+.tagger {
+  max-width: 600px;
 }

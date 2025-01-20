@@ -1,14 +1,4 @@
 <div class="container">
-  <!-- Collapsible File List -->
-  <div class="file-list-wrapper">
-    <button class="collapse-button" (click)="toggleFileList()">
-      {{ isFileListVisible ? "Hide" : "Show" }} File List
-    </button>
-    <div *ngIf="isFileListVisible" class="file-list-content">
-      <app-file-list></app-file-list>
-    </div>
-  </div>
-
   <!-- Main Viewer Section -->
   <div class="viewer-wrapper">
     <div class="viewer">
@@ -23,19 +13,27 @@
         Cannot preview this file type.
       </p>
     </div>
-    <hr />
     <!-- Next Random Component -->
     <!-- <app-next-random></app-next-random> -->
     <app-video-controls></app-video-controls>
     <app-like></app-like>
     <!-- Tags Section -->
-    <hr />
     <div class="tags-section">
-      <div class="selected-file text-sm text-gray-600 mb-4">
+      <!-- <div class="selected-file text-sm text-gray-600 mb-4">
         {{ selectedFile }}
-      </div>
-      <app-tags></app-tags>
+      </div> -->
+      <!-- <app-tags></app-tags> -->
       <app-tagger></app-tagger>
+    </div>
+  </div>
+
+  <!-- Collapsible File List -->
+  <div class="file-list-wrapper">
+    <button class="collapse-button" (click)="toggleFileList()">
+      {{ isFileListVisible ? "Hide" : "Show" }} File List
+    </button>
+    <div *ngIf="isFileListVisible" class="file-list-content">
+      <app-file-list></app-file-list>
     </div>
   </div>
 </div>

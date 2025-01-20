@@ -13,6 +13,7 @@ import { FileCacheService } from '../../../services/file-cache.service';
 })
 export class FileListComponent implements OnInit {
   files: FileInfo[] = [];
+  selectedFile: FileInfo | null = null;
 
   constructor(
     private fileService: FileCacheService,
@@ -34,6 +35,9 @@ export class FileListComponent implements OnInit {
       error: (error) => {
         console.error('Error fetching files:', error);
       },
+    });
+    this.selectedFileService.selectedFile$.subscribe((f) => {
+      this.selectedFile = f;
     });
   }
 

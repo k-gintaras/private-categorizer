@@ -1,6 +1,21 @@
-<h1>File List</h1>
-<ul>
-  <li *ngFor="let file of files" (click)="selectFile(file)">
-    {{ file.type === "directory" ? "📁" : "📄" }} {{ getFileName(file) }}
-  </li>
-</ul>
+<div class="p-4">
+  <h1 class="text-xl font-bold mb-4">File List</h1>
+  <ul class="space-y-2">
+    <li
+      *ngFor="let file of files"
+      (click)="selectFile(file)"
+      class="flex items-center gap-2 cursor-pointer p-2 rounded-md transition-colors duration-200 hover:bg-gray-100"
+      [class.bg-blue-100]="file.id === selectedFile?.id"
+    >
+      <span class="text-lg">
+        {{ file.type === "directory" ? "📁" : "📄" }}
+      </span>
+      <span
+        class="truncate"
+        [class.font-semibold]="file.id === selectedFile?.id"
+      >
+        {{ getFileName(file) }}
+      </span>
+    </li>
+  </ul>
+</div>

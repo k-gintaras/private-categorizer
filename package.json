@@ -1,8 +1,9 @@
 {
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "file-type": "^19.6.0",
     "mime-types": "^2.1.35",
+    "shared-components": "file:../../AngularProjects/component-heaven/component-heaven/projects/shared-components",
     "sqlite3": "^5.1.7"
   }
 }

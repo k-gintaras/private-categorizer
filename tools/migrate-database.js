@@ -19,13 +19,19 @@ const db = new sqlite3.Database(FILE_DB_PATH, (err) => {
 const runMigrations = () => {
   const migrations = [
     // Add a "likes" table if it doesn't exist
-    `CREATE TABLE IF NOT EXISTS likes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      file_id INTEGER NOT NULL, -- Links to files table
-      timestamp INTEGER NOT NULL, -- Time (in seconds) of the like within the media
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
-    )`,
+    `CREATE TABLE IF NOT EXISTS dislikes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL, -- Links to the files table
+        timestamp INTEGER NOT NULL, -- Time (in seconds) of the like within the media
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the like was added
+        FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
+    );`,
+    `CREATE TABLE IF NOT EXISTS favorites (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL UNIQUE, -- Links to the files table, ensures one favorite per file
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the favorite was added
+        FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
+    );`,
   ];
 
   migrations.forEach((query, index) => {

@@ -3,6 +3,7 @@ mat-toolbar {
   justify-content: flex-start; /* Align navigation items to the left */
   gap: 1rem; /* Space between navigation links */
   padding: 0 1rem; /* Horizontal padding for the toolbar */
+  height: 20px;
 }
 
 mat-toolbar a {
@@ -14,11 +15,4 @@ mat-toolbar a {
 mat-toolbar a.active {
   font-weight: bold; /* Highlight active link */
   text-decoration: underline; /* Optional: add underline to active link */
-}
-
-.content {
-  background-color: grey;
-  padding: 1rem; /* Add padding for the main content area */
-  height: calc(100vh - 64px); /* Adjust height to account for toolbar */
-  overflow: auto; /* Ensure scrolling for overflowing content */
 }
