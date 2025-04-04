@@ -1,59 +1,96 @@
-# Private Categorizer Project
+# Environment Configuration Implementation Guide
 
-## Setup Instructions
+This guide will help you centralize your environment configuration for the media server and viewer application.
 
-### 1. Install Dependencies
+## 1. Create Central .env File
 
-Install the required dependencies for the project:
+First, create a `.env` file in the project root with all configuration in one place:
+
+1. Copy the provided `.env` file to your project root.
+2. Update the values to match your environment (paths, IP addresses, ports).
+
+## 2. Install Required Packages
+
+Make sure you have the needed dependencies installed:
 
 ```bash
+# In project root
+npm install dotenv
+npm install concurrently
+
+# In media-server folder
 cd media-server
-npm install
+npm install dotenv
 ```
 
-```bash
-cd media-viewer
-npm install
-```
+## 3. Implement Setup Script
 
-// setup the database if it is custom, so db has tables if a new database
-cd media-server
+1. Copy the provided `setup-env.js` script to your project root.
+2. This script will:
+   - Read values from the `.env` file
+   - Generate Angular environment files
+   - Create a server environment script
+   - Update Docker Compose configuration
+   - Create server configuration scripts
 
-## Environment Configuration
+## 4. Update Package.json Scripts
 
-Create a `.env` file in the project root with the following content (near init-db.sql):
+Update your package.json files to incorporate the setup script:
 
-```env
-ROOT_DIRECTORY=D:/Your/Files/Path
-DB_PATH=D:/Your/Files/Path/file_paths.db
-MEDIA_SERVER_PORT=4000
-ANGULAR_APP_PORT=4200
-```
+1. Add the setup-env script to your root package.json:
 
-## Setup Database
+   ```json
+   "scripts": {
+     "setup-env": "node setup-env.js",
+     "start-server": "npm run setup-env && cd media-server && npm start",
+     "start-client": "npm run setup-env && cd media-viewer && npm start",
+     "start": "npm run setup-env && concurrently \"npm run start-server\" \"npm run start-client\"",
+     "docker-build": "npm run setup-env && docker-compose build",
+     "docker-up": "npm run setup-env && docker-compose up"
+   }
+   ```
 
-Creates tables in .env DB_PATH and indexes all files in .env ROOT_DIRECTORY
+2. Simplify the media-server package.json scripts to rely on environment variables.
+3. Simplify the media-viewer package.json scripts to rely on environment variables.
 
-```bash
-cd tools
-node index-folder.js
-```
+## 5. Update Docker Compose File
 
-### Tags API
+Replace your existing docker-compose.yml with the provided one that uses environment variables.
 
-#### 1. Get All Tags
+## 6. Usage
 
-- **URL**: `GET /tags`
-- **Response**: JSON array of all tags.
+Now you can run your applications with simple commands:
 
-#### 2. Add a New Tag
+- For development:
 
-- **URL**: `POST /tags`
-- **Body** (JSON):
-  ```json
-  {
-    "name": "example",
-    "tag_group": "example-group",
-    "color": "#abcdef"
-  }
+  ```bash
+  npm run start
   ```
+
+- For Docker:
+  ```bash
+  npm run docker-build
+  npm run docker-up
+  ```
+
+## 7. Making Changes
+
+When you need to change a configuration value:
+
+1. Update the central `.env` file
+2. Run the setup script with `npm run setup-env`
+3. Restart your applications
+
+## Troubleshooting
+
+- **Missing environment variables**: Check if your `.env` file is correctly formatted
+- **Path issues**: Verify that all paths in the `.env` file are valid and accessible
+- **Docker volume errors**: Ensure the paths in `DOCKER_VOLUME_PATH` are correctly mapped
+
+## Benefits of this Approach
+
+- Single source of truth for all configuration
+- Easy to change environment settings
+- Consistent configuration across development and production
+- No hardcoded values in source code
+- Better security by keeping sensitive information in the .env file

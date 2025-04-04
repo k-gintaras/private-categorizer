@@ -1,5 +1,22 @@
-ROOT_DIRECTORY=D:/Old Files
-FILE_DB_PATH=D:/Old Files/file_paths.db
+# Media Application Environment Configuration
+
+# Base paths and directories
+# must use full paths please
+# path configuration
+IS_DOCKER=false
+DOCKER_VOLUME_PATH=G:/My Drive/Photo to Organize
+ROOT_DIRECTORY=G:/My Drive/Photo to Organize
+FILE_DB_PATH=G:/My Drive/Photo to Organize/file_paths.db
+
+# Server configuration
 MEDIA_SERVER_PORT=4000
+MEDIA_SERVER_HOST=0.0.0.0
+
+# Client configuration
 ANGULAR_APP_PORT=4200
-SERVER_URL=http://192.168.1.174:4000
+
+# Network configuration
+# Use 'localhost' for local development or your machine's IP for network access
+SERVER_HOST=192.168.1.174
+SERVER_URL=http://192.168.1.174:4200
+

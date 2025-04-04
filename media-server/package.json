@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "configure": "node ./scripts/configure-env.js",
-    "start": "npm run configure && node server.js",
-    "docker": "docker-compose up --build"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": [],
   "author": "",

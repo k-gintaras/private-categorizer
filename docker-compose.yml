@@ -5,15 +5,16 @@ services:
       dockerfile: Dockerfile
     environment:
       - IS_DOCKER=true
+      - ROOT_DIRECTORY=/mnt/ssd
+      - FILE_DB_PATH=/mnt/ssd/file_paths.db
+      - MEDIA_SERVER_PORT=${MEDIA_SERVER_PORT}
+      - SERVER_URL=${SERVER_URL}
     volumes:
-      - 'D:/Old Files:/mnt/ssd'
+      - '${DOCKER_VOLUME_PATH}:/mnt/ssd'
     ports:
-      - '4000:4000'
+      - '${MEDIA_SERVER_PORT}:${MEDIA_SERVER_PORT}'
     command: >
       sh -c "node /app/scripts/configure-env.js > /tmp/env && . /tmp/env && node /app/server.js"
-
-    env_file:
-      - .env
 
   media-viewer:
     build:
@@ -24,3 +25,5 @@ services:
     volumes:
       # This ensures the `dist` folder is mapped correctly in the container.
       - ./media-viewer/dist/media-viewer/browser:/app/dist:ro
+    depends_on:
+      - media-server

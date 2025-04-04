@@ -5,17 +5,32 @@ const path = require('path');
 // Load environment variables
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
+// Check for force reindex flag
+const args = process.argv.slice(2);
+const forceReindex = args.includes('--force');
+
 // Configurations
 const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static'; // Root folder to scan
-const DB_PATH = path.join(ROOT_DIRECTORY, 'file_paths.db'); // Database stored inside the root folder
+const DB_PATH = process.env.FILE_DB_PATH || path.join(ROOT_DIRECTORY, 'file_paths.db'); // Use env or default
 const INIT_SQL_PATH = path.join(__dirname, '../init-db.sql'); // Schema initialization file
 
-console.log(`Database will be initialized at: ${DB_PATH}`);
+console.log(`Database path: ${DB_PATH}`);
+console.log(`Root directory: ${ROOT_DIRECTORY}`);
 
-// Ensure the database folder exists
+// Check if the database already exists
+const dbExists = fs.existsSync(DB_PATH);
+
+// Ensure the root directory exists
 if (!fs.existsSync(ROOT_DIRECTORY)) {
   console.error(`Root directory does not exist: ${ROOT_DIRECTORY}`);
   process.exit(1);
+}
+
+// Ensure the database directory exists
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  console.log(`Creating database directory: ${dbDir}`);
+  fs.mkdirSync(dbDir, { recursive: true });
 }
 
 // Initialize SQLite Database
@@ -38,8 +53,20 @@ const setupDatabaseSchema = () => {
   db.exec(sql, (err) => {
     if (err) {
       console.error('Failed to execute database schema:', err.message);
+      process.exit(1);
     } else {
       console.log('Database schema initialized successfully.');
+
+      // Decide whether to run indexing
+      if (!dbExists || forceReindex) {
+        console.log(`${forceReindex ? 'Forced re-indexing' : 'New database created'}. Starting indexing...`);
+        scanDirectory(ROOT_DIRECTORY);
+      } else {
+        console.log('Database already exists. Skipping indexing.');
+        db.close(() => {
+          console.log('Database connection closed.');
+        });
+      }
     }
   });
 };
@@ -85,37 +112,7 @@ function getFileSubtype(filePath) {
   }
 }
 
-// Function to scan directories and index files
-// const scanDirectory = (dir, parentId = null) => {
-//   const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-//   entries.forEach((entry) => {
-//     const fullPath = path.join(dir, entry.name);
-//     const normalizedRoot = path.resolve(ROOT_DIRECTORY).replace(/\\/g, '/');
-//     const normalizedFullPath = path.resolve(fullPath).replace(/\\/g, '/');
-//     const relativePath = normalizedFullPath.replace(normalizedRoot, '');
-//     const type = entry.isDirectory() ? 'directory' : 'file';
-//     const subtype = type === 'file' ? getFileSubtype(fullPath) : null; // Only assign subtype to files
-
-//     const stats = fs.statSync(fullPath);
-//     const size = type === 'file' ? stats.size : null;
-//     const lastModified = stats.mtime.toISOString();
-
-//     // Insert file or directory into the database
-//     db.run(`INSERT INTO files (path, type, parent_id, size, last_modified, subtype) VALUES (?, ?, ?, ?, ?, ?)`, [relativePath, type, parentId, size, lastModified, subtype], function (err) {
-//       if (err) {
-//         console.error(`Failed to insert ${relativePath}:`, err.message);
-//       } else {
-//         const newParentId = this.lastID; // Get the ID of the inserted entry
-
-//         // Recurse if the entry is a directory
-//         if (type === 'directory') {
-//           scanDirectory(fullPath, newParentId);
-//         }
-//       }
-//     });
-//   });
-// };
+// Scan directory function (unchanged from your code)
 const scanDirectory = (dir, parentId = null) => {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -125,7 +122,7 @@ const scanDirectory = (dir, parentId = null) => {
     const normalizedFullPath = path.resolve(fullPath).replace(/\\/g, '/');
     const relativePath = normalizedFullPath.replace(normalizedRoot, '');
     const type = entry.isDirectory() ? 'directory' : 'file';
-    const subtype = type === 'file' ? getFileSubtype(fullPath) : null; // Only assign subtype to files
+    const subtype = type === 'file' ? getFileSubtype(fullPath) : 'unknown'; // Only assign subtype to files
 
     const stats = fs.statSync(fullPath);
     const size = type === 'file' ? stats.size : null;
@@ -160,18 +157,5 @@ const scanDirectory = (dir, parentId = null) => {
   });
 };
 
-// Main function
-const initialize = () => {
-  console.log('Setting up the database schema...');
-  setupDatabaseSchema();
-
-  console.log(`Scanning Root Directory: ${ROOT_DIRECTORY}`);
-  scanDirectory(ROOT_DIRECTORY);
-
-  db.close(() => {
-    console.log('Database setup and indexing completed.');
-  });
-};
-
-// Run the script
-initialize();
+// Start the process
+setupDatabaseSchema();

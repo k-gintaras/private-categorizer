@@ -17,17 +17,17 @@ const colorsRouter = require('./routes/colors');
 const app = express();
 
 console.log('This is messages from server.js');
-console.log('Environment variables:', process.env);
+// console.log('Environment variables:', process.env);
 
+// Modified part of server.js for database initialization
 const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static';
-const FILE_DB_PATH = process.env.FILE_DB_PATH || './file_ids.db';
+// Use actual concatenation instead of template literals for FILE_DB_PATH
+const FILE_DB_PATH = process.env.FILE_DB_PATH || path.join(ROOT_DIRECTORY, 'file_paths.db');
 const PORT = process.env.MEDIA_SERVER_PORT || 3000;
-
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 console.log(`Root directory env: ${process.env.ROOT_DIRECTORY}`);
 console.log(`Root directory: ${ROOT_DIRECTORY}`);
-console.log(path.resolve(__dirname, '../.env'));
+console.log(`Database path: ${FILE_DB_PATH}`);
 
 // Check if ROOT_DIRECTORY exists
 if (!fs.existsSync(ROOT_DIRECTORY)) {
@@ -35,10 +35,16 @@ if (!fs.existsSync(ROOT_DIRECTORY)) {
   process.exit(1);
 }
 
+// In server.js or wherever the database is initialized
+
 // Check if database file exists
 if (!fs.existsSync(FILE_DB_PATH)) {
   console.error(`Database file not found: ${FILE_DB_PATH}`);
-  process.exit(1);
+  console.log('Would you like to create a new database? (y/n)');
+  // Add code to prompt user and create database if needed
+  // Or automatically initiate database creation:
+  console.log(`Creating new database at ${FILE_DB_PATH}`);
+  // Run the initialization code or script here
 }
 // Database initialization
 let db;
