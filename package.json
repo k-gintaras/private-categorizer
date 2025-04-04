@@ -1,14 +1,21 @@
 {
   "scripts": {
     "setup-env": "node setup-env.js",
-    "index-files": "node tools/index-folder.js",
-    "reindex": "node tools/index-folder.js --force",
+    "inject-docker-env": "node setup-docker.js",
+    "index-files": "node media-server/tools/index-folder.js",
+    "reindex": "node media-server/tools/index-folder.js --force",
     "setup": "npm run setup-env && npm run index-files",
+    "setup-server": "cd media-server && npm install",
+    "setup-client": "cd media-viewer && npm install",
+    "setup-all": "npm run setup && npm run setup-server && npm run setup-client",
     "start-server": "npm run setup-env && npm run index-files && cd media-server && npm start",
     "start-client": "npm run setup-env && cd media-viewer && npm start",
     "start": "npm run setup-env && concurrently \"npm run start-server\" \"npm run start-client\"",
-    "docker-build": "npm run setup-env && docker-compose build",
-    "docker-up": "npm run setup-env && docker-compose up"
+    "build-viewer": "cd media-viewer && npm run build",
+    "docker-build": "npm run build-viewer && npm run inject-docker-env && docker-compose build",
+    "docker-up": "npm run inject-docker-env && docker-compose up",
+    "docker": "npm run build-viewer && npm run inject-docker-env && docker-compose up --build",
+    "docker-full": "npm run setup-all && npm run build-viewer && npm run inject-docker-env && docker-compose up --build"
   },
   "dependencies": {
     "concurrently": "^9.1.2",
