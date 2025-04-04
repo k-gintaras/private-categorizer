@@ -7,13 +7,12 @@ services:
       - IS_DOCKER=true
       - ROOT_DIRECTORY=/mnt/ssd
       - FILE_DB_PATH=/mnt/ssd/file_paths.db
-      - MEDIA_SERVER_PORT=4000
-      - SERVER_URL=http://localhost:4000
+      - MEDIA_SERVER_PORT=4001
+      - SERVER_URL=http://localhost:4001
     volumes:
-      - 'G:/My Drive/Photo to Organize:/mnt/ssd'
-      - './db:/mnt/ssd' # Mount a local db folder to the same container path
+      - 'C:\Users\Ubaby\Pictures\Screenshots:/mnt/ssd'
     ports:
-      - '4000:4000'
+      - '4001:4001'
     command: >
       sh -c "
         echo 'Initializing database if needed...' &&
@@ -27,7 +26,7 @@ services:
       context: .
       dockerfile: ./media-viewer/Dockerfile
     environment:
-      - SERVER_URL=http://media-server:4000
+      - SERVER_URL=http://media-server:4001
     ports:
       - '5000:5000'
     volumes:

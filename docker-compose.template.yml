@@ -11,7 +11,6 @@ services:
       - SERVER_URL=http://localhost:${MEDIA_SERVER_PORT}
     volumes:
       - '${DOCKER_VOLUME_PATH}:/mnt/ssd'
-      - './db:/mnt/ssd' # Mount a local db folder to the same container path
     ports:
       - '${MEDIA_SERVER_PORT}:${MEDIA_SERVER_PORT}'
     command: >
