@@ -15,7 +15,7 @@
     "docker-build": "npm run build-viewer && npm run inject-docker-env && docker-compose build",
     "docker-up": "npm run inject-docker-env && docker-compose up",
     "docker": "npm run build-viewer && npm run inject-docker-env && docker-compose up --build",
-    "docker-full": "npm run setup-all && npm run build-viewer && npm run inject-docker-env && docker-compose up --build"
+    "docker-full": "npm run setup-all && npm run build-viewer && npm run inject-docker-env && docker-compose up --build -d"
   },
   "dependencies": {
     "concurrently": "^9.1.2",

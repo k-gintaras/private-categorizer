@@ -1,5 +1,11 @@
 # Environment Configuration Implementation Guide
 
+## Beware of shared components
+
+as they are currently separate library you have to clone and compile
+you have to add it to tsconfig: "C:/Users/Ubaby/AngularProjects/component-heaven/component-heaven/dist/shared-components"
+or wherever that is
+
 This guide will help you centralize your environment configuration for the media server and viewer application.
 
 ## 1. Create Central .env File
