@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { FileCacheService } from './file-cache.service';
 import { SelectedFileService } from './selected-file.service';
 import { ApiConfigService } from './api-config.service';
-import { Dislike } from '../models/analytics.model';
 import { VideoPlayerService } from './video-player.service';
-import { FileInfo } from '../models/file.model';
+import { Dislike, DbFile } from '../models'; // Import your types here
 
 @Injectable({
   providedIn: 'root',
 })
 export class DislikeService {
-  private lastDislikeTimestamp: number | null = null; // Track the last rounded timestamp for a dislike
-  private dislikeInterval = 1000; // Minimum interval between dislikes in milliseconds
+  private lastDislikeTimestamp: number | null = null;
+  private dislikeInterval = 1000; // 1 second throttle
 
   constructor(
     private http: HttpClient,
@@ -23,30 +23,27 @@ export class DislikeService {
     private videoPlayerService: VideoPlayerService
   ) {}
 
-  /**
-   * Add a dislike to the selected file.
-   * @param file The file to dislike
-   */
-  addDislike(file: FileInfo): Observable<Dislike> {
+  addDislike(fileId: number, isPlayable: boolean): Observable<Dislike> {
     const currentTime = Date.now();
 
     if (
       this.lastDislikeTimestamp &&
       currentTime - this.lastDislikeTimestamp < this.dislikeInterval
     ) {
-      throw new Error('Dislikes are throttled to prevent spam.');
+      return throwError(
+        () => new Error('Dislikes are throttled to prevent spam.')
+      );
     }
 
     this.lastDislikeTimestamp = currentTime;
 
-    // Determine timestamp based on file type
     const timestamp =
-      file.subtype === 'video' || file.subtype === 'audio'
+      isPlayable
         ? Math.round(this.videoPlayerService.getCurrentPlayTime())
-        : currentTime;
+        : Math.floor(currentTime / 1000); // Convert ms to seconds for consistency
 
-    const dislikePayload: Partial<Dislike> = {
-      fileId: file.id,
+    const dislikePayload = {
+      fileId: fileId,
       timestamp,
     };
 
@@ -58,20 +55,16 @@ export class DislikeService {
       .pipe(
         tap((savedDislike) => {
           console.log('Dislike added:', savedDislike);
-          this.updateDislikeInCache(file.id, savedDislike);
+          this.updateDislikeInCache(fileId, savedDislike);
         })
       );
   }
 
-  /**
-   * Remove a dislike from the selected file and update the cache.
-   * @param dislikeId The ID of the dislike to remove
-   */
   removeDislike(dislikeId: number): Observable<void> {
     const selectedFile = this.selectedFileService.getSelectedFile();
 
     if (!selectedFile) {
-      throw new Error('No file selected.');
+      return throwError(() => new Error('No file selected.'));
     }
 
     return this.http
@@ -83,11 +76,6 @@ export class DislikeService {
       );
   }
 
-  /**
-   * Update the cache with the new dislike data.
-   * @param fileId The ID of the file to update
-   * @param newDislike The dislike object to add
-   */
   private updateDislikeInCache(fileId: number, newDislike: Dislike): void {
     const file = this.fileCacheService.getFileById(fileId);
 
@@ -97,17 +85,12 @@ export class DislikeService {
     }
   }
 
-  /**
-   * Remove a dislike from the cache.
-   * @param fileId The ID of the file to update
-   * @param dislikeId The ID of the dislike to remove
-   */
   private removeDislikeFromCache(fileId: number, dislikeId: number): void {
     const file = this.fileCacheService.getFileById(fileId);
 
     if (file) {
       const updatedDislikes = (file.dislikes || []).filter(
-        (dislike) => dislike.id !== dislikeId
+        (d: any) => d.id !== dislikeId
       );
       this.fileCacheService.updateDislikes(fileId, updatedDislikes);
     }

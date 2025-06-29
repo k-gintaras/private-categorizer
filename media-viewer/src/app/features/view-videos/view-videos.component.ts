@@ -7,9 +7,10 @@ import { SelectedFileService } from '../../services/selected-file.service';
 import { TaggerComponent } from '../tags/tagger/tagger.component';
 import { TagsComponent } from '../tags/tags.component';
 import { NextRandomComponent } from '../../components/next-random/next-random.component';
-import { FileInfo } from '../../models/file.model';
 import { VideoControlsComponent } from '../../components/video-controls/video-controls.component';
 import { LikeComponent } from '../../components/like/like.component';
+import { ParsedFile, isImageFile, isVideoFile } from 'src/app/models'; // Updated import
+import { FileTypeDetectorService } from 'src/app/services/helpers/file-type-detector.service';
 
 @Component({
   selector: 'app-view-videos',
@@ -22,15 +23,19 @@ import { LikeComponent } from '../../components/like/like.component';
     TaggerComponent,
     VideoControlsComponent,
     LikeComponent,
-    LikeComponent,
+    // Removed duplicate LikeComponent
   ],
   templateUrl: './view-videos.component.html',
-  styleUrls: ['./view-videos.component.scss'], // Corrected from `styleUrl` to `styleUrls`
+  styleUrls: ['./view-videos.component.scss'],
 })
 export class ViewVideosComponent implements OnInit {
-  selectedFile: FileInfo | null = null;
+  selectedFile: ParsedFile | null = null; // Updated type
 
-  constructor(private fileTracker: SelectedFileService) {}
+  constructor(
+    private fileTracker: SelectedFileService,
+    private fileTypeService: FileTypeDetectorService
+  ) {}
+
   isFileListVisible = true;
 
   toggleFileList(): void {
@@ -39,18 +44,45 @@ export class ViewVideosComponent implements OnInit {
 
   ngOnInit(): void {
     // Subscribe to the selected file from the FileTrackerService
-    this.fileTracker.selectedFile$.subscribe((f) => {
-      this.selectedFile = f;
+    this.fileTracker.selectedFile$.subscribe((selectedFile) => {
+      this.selectedFile = selectedFile;
     });
   }
 
-  isImage(f: FileInfo | null): boolean {
-    const filePath = f?.path;
-    return !!filePath && /\.(jpg|jpeg|png|gif|bmp)$/i.test(filePath);
+  /**
+   * Check if file is an image using utility function
+   */
+  isImage(file: ParsedFile | null): boolean {
+    if (!file) return false;
+    return isImageFile(file); // Uses file.subtype === 'image'
   }
 
-  isVideo(f: FileInfo | null): boolean {
-    const filePath = f?.path;
+  /**
+   * Check if file is a video using utility function
+   */
+  isVideo(file: ParsedFile | null): boolean {
+    if (!file) return false;
+    return isVideoFile(file); // Uses file.subtype === 'video'
+  }
+
+  /**
+   * Alternative: Check by file extension (fallback method)
+   */
+  isVideoByExtension(file: ParsedFile | null): boolean {
+    const filePath = file?.path;
     return !!filePath && /\.(mp4|webm|ogg|avi|mov|mkv|flv)$/i.test(filePath);
+  }
+
+  /**
+   * Alternative: Use file type detector service
+   */
+  isImageByService(file: ParsedFile | null): boolean {
+    if (!file) return false;
+    return this.fileTypeService.isImage(file);
+  }
+
+  isVideoByService(file: ParsedFile | null): boolean {
+    if (!file) return false;
+    return this.fileTypeService.isVideo(file);
   }
 }

@@ -1,8 +1,8 @@
 import { NgIf } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { Tag } from '../../models/tag.model';
 import { TagService } from '../../services/tag.service';
+import { Tag } from 'src/app/models';
 
 @Component({
   selector: 'app-tag',

@@ -13,6 +13,7 @@ const forceReindex = args.includes('--force');
 const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static'; // Root folder to scan
 const DB_PATH = process.env.FILE_DB_PATH || path.join(ROOT_DIRECTORY, 'file_paths.db'); // Use env or default
 const INIT_SQL_PATH = path.join(__dirname, '../init-db.sql'); // Schema initialization file
+const INIT_INSERTS_PATH = path.join(__dirname, '../initial-inserts.sql'); // Data initialization file
 
 console.log(`Database path: ${DB_PATH}`);
 console.log(`Root directory: ${ROOT_DIRECTORY}`);
@@ -42,48 +43,126 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   console.log('Connected to the SQLite database');
 });
 
+// Function to run initial data inserts
+const runInitialInserts = () => {
+  if (!fs.existsSync(INIT_INSERTS_PATH)) {
+    console.log('No initial inserts file found, skipping data initialization');
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const insertSql = fs.readFileSync(INIT_INSERTS_PATH, 'utf-8');
+
+    console.log('Running initial data inserts...');
+    db.exec(insertSql, (err) => {
+      if (err) {
+        console.error('Failed to execute initial inserts:', err.message);
+        reject(err);
+      } else {
+        console.log('Initial data inserts completed successfully');
+        resolve();
+      }
+    });
+  });
+};
+
 // Function to initialize the database schema
-const setupDatabaseSchema = () => {
+const setupDatabaseSchema = async () => {
   if (!fs.existsSync(INIT_SQL_PATH)) {
     console.error(`SQL file not found: ${INIT_SQL_PATH}`);
     process.exit(1);
   }
 
   const sql = fs.readFileSync(INIT_SQL_PATH, 'utf-8');
-  db.exec(sql, (err) => {
-    if (err) {
-      console.error('Failed to execute database schema:', err.message);
-      process.exit(1);
-    } else {
-      console.log('Database schema initialized successfully.');
 
-      // Decide whether to run indexing
-      if (!dbExists || forceReindex) {
-        console.log(`${forceReindex ? 'Forced re-indexing' : 'New database created'}. Starting indexing...`);
-        scanDirectory(ROOT_DIRECTORY);
+  return new Promise((resolve, reject) => {
+    db.exec(sql, async (err) => {
+      if (err) {
+        console.error('Failed to execute database schema:', err.message);
+        reject(err);
       } else {
-        console.log('Database already exists. Skipping indexing.');
-        db.close(() => {
-          console.log('Database connection closed.');
-        });
+        console.log('Database schema initialized successfully.');
+
+        // Run initial inserts if this is a new database
+        if (!dbExists) {
+          try {
+            await runInitialInserts();
+          } catch (insertErr) {
+            console.error('Initial inserts failed:', insertErr.message);
+            // Continue anyway - inserts are not critical
+          }
+        }
+
+        // Decide whether to run indexing
+        if (!dbExists || forceReindex) {
+          console.log(`${forceReindex ? 'Forced re-indexing' : 'New database created'}. Starting file indexing...`);
+          scanDirectory(ROOT_DIRECTORY);
+        } else {
+          console.log('Database already exists. Skipping indexing.');
+          db.close(() => {
+            console.log('Database connection closed.');
+          });
+        }
+
+        resolve();
       }
-    }
+    });
   });
 };
 
-// Define file extensions for each category (added more subtypes)
-const videoExtensions = ['.mp4', '.avi', '.mkv', '.mov', '.wmv'];
-const audioExtensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg'];
-const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'];
-const textExtensions = ['.txt', '.md', '.pdf', '.docx', '.rtf'];
-const archiveExtensions = ['.zip', '.tar', '.rar', '.7z', '.gz'];
-const spreadsheetExtensions = ['.xls', '.xlsx', '.csv'];
-const presentationExtensions = ['.ppt', '.pptx'];
-const codeExtensions = ['.js', '.ts', '.py', '.java', '.cpp', '.html', '.css', '.json'];
-const databaseExtensions = ['.db', '.sqlite', '.mdb'];
-const fontExtensions = ['.ttf', '.otf', '.woff', '.woff2'];
+// Function to check if initial data already exists
+const checkInitialDataExists = () => {
+  return new Promise((resolve) => {
+    db.get('SELECT COUNT(*) as count FROM tags', (err, row) => {
+      if (err) {
+        console.log('Could not check for existing data, assuming none exists');
+        resolve(false);
+      } else {
+        const hasData = row.count > 0;
+        console.log(`Found ${row.count} existing tags in database`);
+        resolve(hasData);
+      }
+    });
+  });
+};
 
-// Function to get the file subtype based on the extension
+// Enhanced initial inserts with data check
+const runInitialInsertsIfNeeded = async () => {
+  if (!fs.existsSync(INIT_INSERTS_PATH)) {
+    console.log('No initial inserts file found, skipping data initialization');
+    return;
+  }
+
+  // Check if we already have initial data
+  const hasData = await checkInitialDataExists();
+  if (hasData) {
+    console.log('Initial data already exists, skipping inserts');
+    return;
+  }
+
+  return new Promise((resolve, reject) => {
+    const insertSql = fs.readFileSync(INIT_INSERTS_PATH, 'utf-8');
+
+    console.log('Running initial data inserts...');
+    db.exec(insertSql, (err) => {
+      if (err) {
+        console.error('Failed to execute initial inserts:', err.message);
+        reject(err);
+      } else {
+        console.log('✅ Initial data inserts completed successfully');
+        resolve();
+      }
+    });
+  });
+};
+
+// Define file extensions for each category - simplified to your 4 core types
+const videoExtensions = ['.mp4', '.avi', '.mkv', '.mov', '.wmv', '.webm', '.flv'];
+const audioExtensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma'];
+const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.svg', '.webp'];
+const textExtensions = ['.txt', '.md', '.pdf', '.docx', '.rtf', '.html', '.json', '.csv'];
+
+// Simplified function to get the file subtype (only 4 types)
 function getFileSubtype(filePath) {
   const ext = path.extname(filePath).toLowerCase();
 
@@ -95,24 +174,12 @@ function getFileSubtype(filePath) {
     return 'image';
   } else if (textExtensions.includes(ext)) {
     return 'text';
-  } else if (archiveExtensions.includes(ext)) {
-    return 'archive';
-  } else if (spreadsheetExtensions.includes(ext)) {
-    return 'spreadsheet';
-  } else if (presentationExtensions.includes(ext)) {
-    return 'presentation';
-  } else if (codeExtensions.includes(ext)) {
-    return 'code';
-  } else if (databaseExtensions.includes(ext)) {
-    return 'database';
-  } else if (fontExtensions.includes(ext)) {
-    return 'font';
   } else {
-    return 'unknown'; // If no match, categorize as 'unknown'
+    return 'text'; // Default fallback to text for unknown extensions
   }
 }
 
-// Scan directory function (unchanged from your code)
+// Scan directory function
 const scanDirectory = (dir, parentId = null) => {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -122,7 +189,7 @@ const scanDirectory = (dir, parentId = null) => {
     const normalizedFullPath = path.resolve(fullPath).replace(/\\/g, '/');
     const relativePath = normalizedFullPath.replace(normalizedRoot, '');
     const type = entry.isDirectory() ? 'directory' : 'file';
-    const subtype = type === 'file' ? getFileSubtype(fullPath) : 'unknown'; // Only assign subtype to files
+    const subtype = type === 'file' ? getFileSubtype(fullPath) : 'text'; // Default for directories
 
     const stats = fs.statSync(fullPath);
     const size = type === 'file' ? stats.size : null;
@@ -133,7 +200,7 @@ const scanDirectory = (dir, parentId = null) => {
       if (err) {
         console.error(`Database error for ${relativePath}:`, err.message);
       } else if (row) {
-        console.log(`Path already exists, continuing scan: ${relativePath}`);
+        // console.log(`Path already exists: ${relativePath}`);
         if (type === 'directory') {
           // Continue scanning the directory using the existing ID
           scanDirectory(fullPath, row.id);
@@ -144,7 +211,8 @@ const scanDirectory = (dir, parentId = null) => {
           if (err) {
             console.error(`Failed to insert ${relativePath}:`, err.message);
           } else {
-            const newParentId = this.lastID; // Get the ID of the inserted entry
+            console.log(`✅ Indexed: ${relativePath} (${subtype})`);
+            const newParentId = this.lastID;
 
             // Recurse if the entry is a directory
             if (type === 'directory') {
@@ -157,5 +225,20 @@ const scanDirectory = (dir, parentId = null) => {
   });
 };
 
+// Updated main function with better error handling
+const main = async () => {
+  try {
+    await setupDatabaseSchema();
+
+    // Run initial inserts for new databases
+    if (!dbExists) {
+      await runInitialInsertsIfNeeded();
+    }
+  } catch (error) {
+    console.error('Setup failed:', error);
+    process.exit(1);
+  }
+};
+
 // Start the process
-setupDatabaseSchema();
+main();

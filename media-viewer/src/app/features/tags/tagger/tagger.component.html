@@ -29,7 +29,6 @@
 
 <div class="tagger">
   <app-tag-manager
-    *ngIf="items.length > 0"
     [items]="items"
     [tagGroups]="tagGroups"
     (tagAdded)="onTagAdded($event)"

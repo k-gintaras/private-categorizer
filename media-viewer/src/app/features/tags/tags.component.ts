@@ -4,8 +4,7 @@ import { Subscription } from 'rxjs';
 import { SelectedFileService } from '../../services/selected-file.service';
 import { TagService } from '../../services/tag.service';
 import { TagComponent } from '../../components/tag/tag.component';
-import { FileInfo } from '../../models/file.model';
-import { Tag } from '../../models/tag.model';
+import { Tag, FullFile } from 'src/app/models';
 
 @Component({
   selector: 'app-tags',
@@ -16,8 +15,8 @@ import { Tag } from '../../models/tag.model';
 })
 export class TagsComponent implements OnInit, OnDestroy {
   @Input() fileTags: Tag[] = [];
-  currentFile: FileInfo | null = null;
-  private fileSubscription?: Subscription;
+  currentFile: FullFile | null = null;
+  private subscriptions = new Subscription();
 
   constructor(
     private fileSelectionService: SelectedFileService,
@@ -25,17 +24,24 @@ export class TagsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.fileSubscription = this.fileSelectionService.selectedFile$.subscribe(
-      (file) => {
+    this.subscriptions.add(
+      this.fileSelectionService.selectedFile$.subscribe((file) => {
         this.currentFile = file;
-        if (!file) return;
-        if (!file.tags) return;
-        this.fileTags = file.tags;
-      }
+        if (!file?.tags?.length) {
+          this.fileTags = [];
+          return;
+        }
+
+        if (typeof file.tags[0] === 'number') {
+        } else {
+          // Already Tag objects
+          this.fileTags = file.tags as Tag[];
+        }
+      })
     );
   }
 
   ngOnDestroy(): void {
-    this.fileSubscription?.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 }

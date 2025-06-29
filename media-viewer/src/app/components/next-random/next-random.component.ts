@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RandomNextService } from '../../services/random-next.service';
 import { SelectedFileService } from '../../services/selected-file.service';
-import { FileInfo } from '../../models/file.model';
+import { ParsedFile } from '../../models'; // Updated import
 
 @Component({
   selector: 'app-next-random',
@@ -9,8 +9,8 @@ import { FileInfo } from '../../models/file.model';
   templateUrl: './next-random.component.html',
   styleUrl: './next-random.component.scss',
 })
-export class NextRandomComponent {
-  currentFile: FileInfo | null = null;
+export class NextRandomComponent implements OnInit {
+  currentFile: ParsedFile | null = null; // Updated type
 
   constructor(
     private randomNextService: RandomNextService,

@@ -30,7 +30,7 @@ export class VideoViewComponent implements AfterViewInit, OnDestroy {
 
     // Subscribe to file changes after player initialization
     this.selectedFileService.selectedFile$.subscribe((fileInfo) => {
-      if (fileInfo && fileInfo.isFull) {
+      if (fileInfo) {
         if (fileInfo.subtype === 'video')
           this.videoPlayerService.updateVideoSource(fileInfo);
       }

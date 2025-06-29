@@ -3,7 +3,7 @@ import { ColorService } from '../../services/color.service';
 import { ColorPaletteService } from '../../services/color-palette.service';
 import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
-import { ColorPalette } from '../../models/color.model';
+import { ColorPalette, ParsedColorPalette } from 'src/app/models';
 
 @Component({
   selector: 'app-color-picker',
@@ -13,9 +13,9 @@ import { ColorPalette } from '../../models/color.model';
   styleUrls: ['./color-picker.component.scss'],
 })
 export class ColorPickerComponent implements OnInit {
-  availablePalettes: ColorPalette[] = [];
+  availablePalettes: ParsedColorPalette[] = [];
   selectedPaletteId: number | null = null;
-  selectedPalette: ColorPalette | null = null;
+  selectedPalette: ParsedColorPalette | null = null;
   currentColor: string | null = null;
 
   constructor(

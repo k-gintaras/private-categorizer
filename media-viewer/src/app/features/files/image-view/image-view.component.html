@@ -1,11 +1,6 @@
 <div *ngIf="fileInfo">
   <h2>Viewing: {{ fileInfo.path }}</h2>
   <div class="image-container">
-    <img
-      *ngIf="isImage(fileInfo)"
-      [src]="'http://localhost:3000/static' + fileInfo.path"
-      alt="File"
-    />
+    <img [src]="'http://localhost:3000/static' + fileInfo.path" alt="File" />
   </div>
-  <p *ngIf="!isImage(fileInfo)">Cannot preview this file type.</p>
 </div>

@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { FileInfo } from '../../models/file.model';
 import { RandomNextService } from '../../services/random-next.service';
 import { SelectedFileService } from '../../services/selected-file.service';
 import { VideoPlayerService } from '../../services/video-player.service';
+import { ParsedFile } from '../../models'; // Updated import
 
 @Component({
   selector: 'app-video-controls',
@@ -10,7 +10,7 @@ import { VideoPlayerService } from '../../services/video-player.service';
   styleUrls: ['./video-controls.component.scss'],
 })
 export class VideoControlsComponent {
-  private fileHistory: FileInfo[] = []; // Stack to track previously played files
+  private fileHistory: ParsedFile[] = []; // Updated type - Stack to track previously played files
 
   constructor(
     private selectedFileService: SelectedFileService,
@@ -25,8 +25,8 @@ export class VideoControlsComponent {
         // if (currentFile && currentFile.id !== file.id) {
         // }
         this.fileHistory.push(file);
-        console.log(file.id);
-        console.log(this.fileHistory.length);
+        console.log('File ID:', file.id);
+        console.log('History length:', this.fileHistory.length);
       }
     });
   }
@@ -36,7 +36,7 @@ export class VideoControlsComponent {
    */
   playPrevious(): void {
     if (this.fileHistory.length > 0) {
-      this.fileHistory.pop();
+      this.fileHistory.pop(); // Remove current file
       const previousFile = this.fileHistory.pop(); // Get the last file in the stack
       if (previousFile) {
         this.selectedFileService.selectFile(previousFile.id);
@@ -66,7 +66,7 @@ export class VideoControlsComponent {
    * Get the currently selected file.
    * @returns The current file or null if no file is selected
    */
-  private getCurrentFile(): FileInfo | null {
+  private getCurrentFile(): ParsedFile | null {
     return this.selectedFileService.getSelectedFile();
   }
 }

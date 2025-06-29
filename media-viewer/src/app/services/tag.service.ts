@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, tap } from 'rxjs/operators';
 import { ApiConfigService } from './api-config.service';
-import { Tag } from '../models/tag.model';
+import { Tag } from '../models';
 
 export interface GroupedTags {
   [group: string]: Tag[];
@@ -30,19 +30,14 @@ export class TagService {
       .get<any[]>(url)
       .pipe(
         map((tags) =>
-          tags.reduce((groups: GroupedTags, tag) => {
-            // Map `tag_group` from the server to `tagGroup`
-            const mappedTag = {
-              ...tag,
-              tagGroup: tag.tag_group, // Map `tag_group` to `tagGroup`
-            };
-            delete mappedTag.tag_group; // Remove `tag_group` to avoid ambiguity
+          tags.reduce((groups: GroupedTags, tag: Tag) => {
+            console.log('Fetched tags:', tags);
 
-            const group = mappedTag.tagGroup || 'Ungrouped'; // Fallback for undefined or missing tagGroup
+            const group = tag.tag_group || 'Ungrouped'; // Fallback for undefined or missing tagGroup
             if (!groups[group]) {
               groups[group] = [];
             }
-            groups[group].push(mappedTag);
+            groups[group].push(tag);
             return groups;
           }, {} as GroupedTags)
         ),
@@ -61,6 +56,7 @@ export class TagService {
    * @param tag The tag data to create.
    */
   createTag(tag: Partial<Tag>): Observable<Tag> {
+    console.log('Creating tag:', tag);
     const url = this.getApiTagUrl();
     return this.http.post<Tag>(url, tag).pipe(
       tap(() => this.loadTags()), // Reload tags to ensure UI reflects the new data

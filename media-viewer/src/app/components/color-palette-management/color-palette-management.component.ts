@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { ColorPalette } from '../../models/color.model';
 import { ColorPaletteService } from '../../services/color-palette.service';
 import { NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ColorPalette } from 'src/app/models';
 
 @Component({
   selector: 'app-color-palette-management',

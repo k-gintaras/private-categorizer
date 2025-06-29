@@ -1,43 +1,42 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ApiConfigService } from './api-config.service';
-import { FileInfo } from '../models/file.model';
 import {
-  BaseAnalytics,
+  FullFile,
+  Like,
   Dislike,
   Favorite,
-  Like,
-} from '../models/analytics.model';
-import { Tag } from '../models/tag.model';
+  Tag,
+  ParsedAnalytics,
+} from '../models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FileCacheService {
-  private filesSubject = new BehaviorSubject<FileInfo[]>([]);
+  private filesSubject = new BehaviorSubject<FullFile[]>([]);
   files$ = this.filesSubject.asObservable();
 
-  private filesCache: FileInfo[] = [];
+  private filesCache: FullFile[] = [];
 
   constructor(private http: HttpClient, private apiConfig: ApiConfigService) {}
 
-  /**
-   * Fetch the basic list of files (without detailed data like tags, analytics, likes).
-   */
-  fetchFiles(): Observable<FileInfo[]> {
+  fetchFiles(): Observable<FullFile[]> {
     if (this.filesCache.length > 0) {
-      return this.files$; // Return cached files if available
+      return of(this.filesCache);
     }
 
     const apiUrl = `${this.apiConfig.getApiBaseUrl()}/files`;
 
-    this.http.get<FileInfo[]>(apiUrl).subscribe((files) => {
+    this.http.get<FullFile[]>(apiUrl).subscribe((files) => {
       this.filesCache = files.map((file) => ({
         ...file,
-        isFull: false, // Mark as partial
-        tags: [],
-        likes: [],
+        tags: file.tags || [],
+        likes: file.likes || [],
+        dislikes: file.dislikes || [],
+        favorite: file.favorite || null,
+        analytics: file.analytics || null,
       }));
       this.filesSubject.next(this.filesCache);
     });
@@ -45,95 +44,75 @@ export class FileCacheService {
     return this.files$;
   }
 
-  /**
-   * Fetch detailed data for a specific file.
-   * @param fileId The ID of the file to fetch
-   */
-  fetchFullFileData(fileId: number): Observable<FileInfo> {
+  fetchFullFileData(fileId: number): Observable<FullFile> {
     const apiUrl = `${this.apiConfig.getApiBaseUrl()}/files/${fileId}/full`;
 
     return new Observable((observer) => {
-      this.http.get<FileInfo>(apiUrl).subscribe((file) => {
-        const updatedFile: FileInfo = {
-          ...file,
-          isFull: true,
-          tags: file.tags || [],
-          analytics: file.analytics || undefined, // Include only if exists
-          likes: file.likes || [],
-        };
-
-        this.updateFile(updatedFile);
-        observer.next(updatedFile);
-        observer.complete();
+      this.http.get<FullFile>(apiUrl).subscribe({
+        next: (file) => {
+          const updatedFile: FullFile = {
+            ...file,
+            tags: file.tags || [],
+            likes: file.likes || [],
+            dislikes: file.dislikes || [],
+            favorite: file.favorite || null,
+            analytics: file.analytics || null,
+          };
+          this.updateFile(updatedFile);
+          observer.next(updatedFile);
+          observer.complete();
+        },
+        error: (err) => observer.error(err),
       });
     });
   }
 
-  /**
-   * Get a file from the cache by its ID.
-   * @param fileId The file ID
-   */
-  getFileById(fileId: number): FileInfo | undefined {
+  getFileById(fileId: number): FullFile | undefined {
     return this.filesCache.find((file) => file.id === fileId);
   }
 
-  /**
-   * Update the analytics of a specific file.
-   */
-  updateAnalytics(fileId: number, newAnalytics: BaseAnalytics): void {
-    const file = this.filesCache.find((file) => file.id === fileId);
+  updateAnalytics(fileId: number, newAnalytics: ParsedAnalytics): void {
+    const file = this.getFileById(fileId);
     if (file) {
       file.analytics = newAnalytics;
       this.updateFile(file);
     }
   }
 
-  /**
-   * Update the likes of a specific file.
-   */
   updateLikes(fileId: number, newLikes: Like[]): void {
-    const file = this.filesCache.find((file) => file.id === fileId);
+    const file = this.getFileById(fileId);
     if (file) {
       file.likes = newLikes;
       this.updateFile(file);
     }
   }
 
-  updateFavorite(fileId: number, favorite: Favorite | null): void {
-    const file = this.filesCache.find((file) => file.id === fileId);
-    if (file) {
-      file.favorite = favorite;
-      this.updateFile(file);
-    }
-  }
-
-  updateDislikes(fileId: number, updatedDislikes: Dislike[]) {
-    const file = this.filesCache.find((file) => file.id === fileId);
+  updateDislikes(fileId: number, updatedDislikes: Dislike[]): void {
+    const file = this.getFileById(fileId);
     if (file) {
       file.dislikes = updatedDislikes;
       this.updateFile(file);
     }
   }
 
-  /**
-   * Update the likes of a specific file.
-   */
+  updateFavorite(fileId: number, favorite: Favorite | null): void {
+    const file = this.getFileById(fileId);
+    if (file) {
+      file.favorite = favorite;
+      this.updateFile(file);
+    }
+  }
+
   updateTags(fileId: number, newTags: Tag[]): void {
-    const file = this.filesCache.find((file) => file.id === fileId);
+    const file = this.getFileById(fileId);
     if (file) {
       file.tags = newTags;
       this.updateFile(file);
     }
   }
 
-  /**
-   * Update a specific file in the cache.
-   * @param updatedFile The file to update
-   */
-  private updateFile(updatedFile: FileInfo): void {
-    const index = this.filesCache.findIndex(
-      (file) => file.id === updatedFile.id
-    );
+  private updateFile(updatedFile: FullFile): void {
+    const index = this.filesCache.findIndex((f) => f.id === updatedFile.id);
     if (index !== -1) {
       this.filesCache[index] = updatedFile;
     } else {
@@ -142,11 +121,7 @@ export class FileCacheService {
     this.filesSubject.next([...this.filesCache]);
   }
 
-  /**
-   * Extract the file name from a full path.
-   * @param fullPath The full file path
-   */
-  public getFileName(fullPath: string): string {
-    return fullPath.split('/').pop() || fullPath.split('\\').pop() || fullPath;
+  getFileName(fullPath: string): string {
+    return fullPath.split(/[/\\]/).pop() || fullPath;
   }
 }

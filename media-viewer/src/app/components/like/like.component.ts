@@ -4,8 +4,8 @@ import { SelectedFileService } from '../../services/selected-file.service';
 import { NgClass, NgIf } from '@angular/common';
 import { DislikeService } from 'src/app/services/dislike.service';
 import { FavoriteService } from 'src/app/services/favorite.service';
-import { FileInfo } from 'src/app/models/analytics.model';
 import { FileService } from 'src/app/services/file.service';
+import { FullFile } from 'src/app/models'; // Updated import
 
 @Component({
   standalone: true,
@@ -16,12 +16,13 @@ import { FileService } from 'src/app/services/file.service';
 })
 export class LikeComponent implements OnInit {
   isLiked = false;
-  fileInfo: FileInfo | null = null;
+  fileInfo: FullFile | null = null; // Updated type
   msg = '';
   isDisliked: boolean = false;
   isFavorite: boolean = false;
   likeCount: number = 0;
   dislikeCount: number = 0;
+
   constructor(
     private likeService: LikeService,
     private dislikeService: DislikeService,
@@ -31,27 +32,29 @@ export class LikeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.selectedFileService.selectedFile$.subscribe((f) => {
-      if (!f) return;
-      this.fileService.fetchFullFileData(f.id).subscribe((file) => {
-        if (!file) return;
-        this.fileInfo = file;
-        // TODO: how do we deal with multiple likes and how we allow add more ?
-        const likeCount =
-          file.likes && file.likes.length > 0 ? file.likes.length : 0;
-        const dislikeCount =
-          file.dislikes && file.dislikes.length > 0 ? file.dislikes.length : 0;
-        this.likeCount = likeCount;
-        this.dislikeCount = dislikeCount;
+    this.selectedFileService.selectedFile$.subscribe((selectedFile) => {
+      if (!selectedFile) return;
 
-        this.isLiked = likeCount > dislikeCount;
-        this.isDisliked = dislikeCount > likeCount;
-        // this.isLiked = (file.likes && file.likes.length > 0) || false;
-        // this.isDisliked = (file.dislikes && file.dislikes.length > 0) || false;
-        console.log(file);
-        console.log('file', file.favorite);
-        console.log('file', typeof file.favorite);
-        this.isFavorite = file.favorite ? true : false;
+      this.fileService.fetchFullFileData(selectedFile.id).subscribe((file) => {
+        if (!file) return;
+
+        this.fileInfo = file;
+
+        // Count likes and dislikes
+        this.likeCount = file.likes?.length || 0;
+        this.dislikeCount = file.dislikes?.length || 0;
+
+        // Determine states based on counts
+        this.isLiked = this.likeCount > this.dislikeCount;
+        this.isDisliked = this.dislikeCount > this.likeCount;
+
+        // Check if favorited (favorite object exists)
+        this.isFavorite = !!file.favorite;
+
+        console.log('Full file data:', file);
+        console.log('Favorite status:', file.favorite);
+        console.log('Like count:', this.likeCount);
+        console.log('Dislike count:', this.dislikeCount);
       });
     });
   }
@@ -63,46 +66,62 @@ export class LikeComponent implements OnInit {
       return;
     }
 
-    this.likeService.addLike(selectedFile).subscribe({
+    this.likeService.addLike(selectedFile.id, true).subscribe({
       next: () => {
         console.log('Like added successfully');
-        this.msg =
-          'liked: ' +
-          selectedFile.path.substring(
-            selectedFile.path.length - 20,
-            selectedFile.path.length
-          );
-        this.isLiked = true;
+        this.msg = `Liked: ${this.getShortPath(selectedFile.path)}`;
+        this.likeCount++;
+        this.updateStates();
       },
       error: (error) => console.error('Error adding like:', error),
     });
   }
+
   dislike(): void {
     const selectedFile = this.selectedFileService.getSelectedFile();
     if (!selectedFile) {
-      console.error('No file selected to like.');
+      console.error('No file selected to dislike.');
       return;
     }
 
-    this.dislikeService.addDislike(selectedFile).subscribe({
+    this.dislikeService.addDislike(selectedFile.id, true).subscribe({
       next: () => {
-        this.isDisliked = true;
+        console.log('Dislike added successfully');
+        this.dislikeCount++;
+        this.updateStates();
       },
       error: (error) => console.error('Error adding dislike:', error),
     });
   }
+
   favorite(): void {
     const selectedFile = this.selectedFileService.getSelectedFile();
     if (!selectedFile) {
-      console.error('No file selected to like.');
+      console.error('No file selected to favorite.');
       return;
     }
 
-    this.favoriteService.addFavorite(selectedFile).subscribe({
+    this.favoriteService.addFavorite(selectedFile.id, true).subscribe({
       next: () => {
+        console.log('Favorite added successfully');
         this.isFavorite = true;
       },
-      error: (error) => console.error('Error adding dislike:', error),
+      error: (error) => console.error('Error adding favorite:', error),
     });
+  }
+
+  /**
+   * Update like/dislike states based on current counts
+   */
+  private updateStates(): void {
+    this.isLiked = this.likeCount > this.dislikeCount;
+    this.isDisliked = this.dislikeCount > this.likeCount;
+  }
+
+  /**
+   * Get shortened file path for display
+   */
+  private getShortPath(path: string): string {
+    return path.length > 20 ? '...' + path.substring(path.length - 20) : path;
   }
 }

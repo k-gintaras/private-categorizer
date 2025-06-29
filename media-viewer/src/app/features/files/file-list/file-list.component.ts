@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { NgFor } from '@angular/common';
 import { SelectedFileService } from '../../../services/selected-file.service';
-import { FileInfo } from '../../../models/file.model';
 import { FileCacheService } from '../../../services/file-cache.service';
+import { ParsedFile, getFileName } from '../../../models'; // Updated import
 
 @Component({
   selector: 'app-file-list',
@@ -12,8 +12,8 @@ import { FileCacheService } from '../../../services/file-cache.service';
   styleUrls: ['./file-list.component.scss'],
 })
 export class FileListComponent implements OnInit {
-  files: FileInfo[] = [];
-  selectedFile: FileInfo | null = null;
+  files: ParsedFile[] = []; // Updated type
+  selectedFile: ParsedFile | null = null; // Updated type
 
   constructor(
     private fileService: FileCacheService,
@@ -36,19 +36,23 @@ export class FileListComponent implements OnInit {
         console.error('Error fetching files:', error);
       },
     });
-    this.selectedFileService.selectedFile$.subscribe((f) => {
-      this.selectedFile = f;
+
+    this.selectedFileService.selectedFile$.subscribe((selectedFile) => {
+      this.selectedFile = selectedFile;
     });
   }
 
   /**
    * Selects a file using SelectedFileService.
    */
-  selectFile(f: FileInfo): void {
-    this.selectedFileService.selectFile(f.id);
+  selectFile(file: ParsedFile): void {
+    this.selectedFileService.selectFile(file.id);
   }
 
-  getFileName(f: FileInfo) {
-    return this.fileService.getFileName(f.path);
+  /**
+   * Get filename from file path using utility function
+   */
+  getFileName(file: ParsedFile): string {
+    return getFileName(file.path);
   }
 }

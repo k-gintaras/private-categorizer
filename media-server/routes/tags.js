@@ -15,13 +15,13 @@ module.exports = (db) => {
 
   // Create a new tag
   router.post('/', (req, res) => {
-    const { name, tagGroup, color } = req.body;
+    const { name, tag_group } = req.body;
 
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ error: 'name is required and must be a string' });
     }
 
-    db.run('INSERT INTO tags (name, tag_group, color) VALUES (?, ?, ?)', [name.trim(), tagGroup?.trim() || null, color?.trim() || null], function (err) {
+    db.run('INSERT INTO tags (name, tag_group) VALUES (?, ?)', [name.trim(), tag_group?.trim() || null], function (err) {
       if (err) {
         if (err.message.includes('UNIQUE constraint failed')) {
           return res.status(409).json({ error: 'A tag with this name already exists in the specified group.' });
@@ -32,8 +32,7 @@ module.exports = (db) => {
       res.status(201).json({
         id: this.lastID,
         name,
-        tagGroup,
-        color,
+        tag_group,
       });
     });
   });
@@ -41,28 +40,24 @@ module.exports = (db) => {
   // Update an existing tag
   router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { name, tagGroup, color } = req.body;
+    const { name, tag_group } = req.body;
 
-    if (!name && !tagGroup && !color) {
-      return res.status(400).json({ error: 'At least one of name, tagGroup, or color must be provided.' });
+    if (!name && !tag_group) {
+      return res.status(400).json({ error: 'At least one of name or tag_group must be provided.' });
     }
 
-    db.run(
-      'UPDATE tags SET name = COALESCE(?, name), tag_group = COALESCE(?, tag_group), color = COALESCE(?, color) WHERE id = ?',
-      [name?.trim() || null, tagGroup?.trim() || null, color?.trim() || null, id],
-      function (err) {
-        if (err) {
-          console.error('Error updating tag:', err);
-          return res.status(500).json({ error: err.message });
-        }
-
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Tag not found.' });
-        }
-
-        res.status(200).json({ message: 'Tag updated successfully.' });
+    db.run('UPDATE tags SET name = COALESCE(?, name), tag_group = COALESCE(?, tag_group) WHERE id = ?', [name?.trim() || null, tag_group?.trim() || null, id], function (err) {
+      if (err) {
+        console.error('Error updating tag:', err);
+        return res.status(500).json({ error: err.message });
       }
-    );
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Tag not found.' });
+      }
+
+      res.status(200).json({ message: 'Tag updated successfully.' });
+    });
   });
 
   // Delete a tag

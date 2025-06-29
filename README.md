@@ -1,102 +1,186 @@
-# Environment Configuration Implementation Guide
+# Media Server Setup Guide
 
-## Beware of shared components
+## Quick Start (Recommended)
 
-as they are currently separate library you have to clone and compile
-you have to add it to tsconfig: "C:/Users/Ubaby/AngularProjects/component-heaven/component-heaven/dist/shared-components"
-or wherever that is
-
-This guide will help you centralize your environment configuration for the media server and viewer application.
-
-## 1. Create Central .env File
-
-First, create a `.env` file in the project root with all configuration in one place:
-
-1. Copy the provided `.env` file to your project root.
-2. Update the values to match your environment (paths, IP addresses, ports).
-
-## 2. Install Required Packages
-
-Make sure you have the needed dependencies installed:
+For new installations, use the quick setup wizard:
 
 ```bash
-# In project root
-npm install dotenv
-npm install concurrently
-
-# In media-server folder
-cd media-server
-npm install dotenv
+npm run quick-setup
 ```
 
-## 3. Implement Setup Script
+This will guide you through:
 
-1. Copy the provided `setup-env.js` script to your project root.
-2. This script will:
-   - Read values from the `.env` file
-   - Generate Angular environment files
-   - Create a server environment script
-   - Update Docker Compose configuration
-   - Create server configuration scripts
+- ✅ Configuring media directory paths
+- ✅ Setting up network access
+- ✅ Installing dependencies
+- ✅ Indexing your media files
+- ✅ Running health checks
 
-## 4. Update Package.json Scripts
+## Manual Setup
 
-Update your package.json files to incorporate the setup script:
+If you prefer manual configuration:
 
-1. Add the setup-env script to your root package.json:
+### 1. Configure Environment
 
-   ```json
-   "scripts": {
-     "setup-env": "node setup-env.js",
-     "start-server": "npm run setup-env && cd media-server && npm start",
-     "start-client": "npm run setup-env && cd media-viewer && npm start",
-     "start": "npm run setup-env && concurrently \"npm run start-server\" \"npm run start-client\"",
-     "docker-build": "npm run setup-env && docker-compose build",
-     "docker-up": "npm run setup-env && docker-compose up"
-   }
-   ```
+```bash
+# Copy and edit the environment file
+cp .env3 .env
+# Edit .env with your settings
+```
 
-2. Simplify the media-server package.json scripts to rely on environment variables.
-3. Simplify the media-viewer package.json scripts to rely on environment variables.
+### 2. Setup and Health Check
 
-## 5. Update Docker Compose File
+```bash
+npm run setup-env        # Generate config files
+npm run health-check     # Validate configuration
+```
 
-Replace your existing docker-compose.yml with the provided one that uses environment variables.
+### 3. Install Dependencies
 
-## 6. Usage
+```bash
+npm run setup-all        # Install all dependencies
+```
 
-Now you can run your applications with simple commands:
+### 4. Index Media Files
 
-- For development:
+```bash
+npm run index-files      # First time indexing
+npm run reindex          # Force re-index
+```
 
-  ```bash
-  npm run start
-  ```
+## Starting the Server
 
-- For Docker:
-  ```bash
-  npm run docker-build
-  npm run docker-up
-  ```
+```bash
+npm start                # Start both server and client
+npm run start-server     # Server only
+npm run start-client     # Client only
+npm run start-force      # Force reindex and start
+```
 
-## 7. Making Changes
+## Health Checks and Diagnostics
 
-When you need to change a configuration value:
+```bash
+npm run health-check     # Check system health
+npm run validate         # Same as health-check
+npm run diagnose         # Health check with tips
+```
 
-1. Update the central `.env` file
-2. Run the setup script with `npm run setup-env`
-3. Restart your applications
+## What the Health Check Validates
+
+### Environment Configuration
+
+- ✅ `.env` file exists and is properly formatted
+- ✅ All required environment variables are set
+- ✅ No default values that should be customized
+- ✅ Network configuration is consistent
+
+### Directory Structure
+
+- ✅ Media directory exists and is accessible
+- ✅ Database directory is readable/writable
+- ✅ Paths are properly configured
+
+### Database Health
+
+- ✅ Database file exists and is accessible
+- ✅ All required tables are present
+- ✅ Database schema is up to date
+
+### File Indexing
+
+- ✅ Media files are indexed in database
+- ✅ Index is recent (warns if > 7 days old)
+- ✅ File count matches expectations
+
+### Network Configuration
+
+- ✅ Server URL matches host and port settings
+- ✅ Port is valid and available
+- ✅ Network access is properly configured
+
+## Common Issues and Solutions
+
+### "No files found in database"
+
+```bash
+npm run index-files      # Index your media files
+```
+
+### "Directory not found"
+
+- Check your `.env` file paths
+- Ensure directories exist
+- Run `npm run quick-setup` to reconfigure
+
+### "Database connection failed"
+
+```bash
+npm run index-files      # Recreate database
+```
+
+### "Port already in use"
+
+- Change `MEDIA_SERVER_PORT` in `.env`
+- Or stop the conflicting service
+
+### "Default values detected"
+
+- Run `npm run quick-setup` to customize configuration
+- Manually edit `.env` file with your specific paths
+
+## Development vs Production
+
+### Development (Local Only)
+
+```bash
+SERVER_HOST=localhost
+SERVER_URL=http://localhost:4001
+```
+
+### Network Access (LAN)
+
+```bash
+SERVER_HOST=192.168.1.174    # Your machine's IP
+SERVER_URL=http://192.168.1.174:4001
+```
+
+## Docker Deployment
+
+```bash
+npm run docker-full      # Build and start with Docker
+npm run docker-build     # Build only
+npm run docker-up        # Start existing containers
+```
+
+## Configuration Files
+
+- `.env` - Main configuration
+- `media-viewer/src/environments/environment.ts` - Angular config (auto-generated)
+- `docker-compose.yml` - Docker configuration (auto-generated)
+
+## Health Check API
+
+When server is running, check health at:
+
+```
+GET http://localhost:4001/health
+```
+
+Returns JSON with health status and detailed check results.
 
 ## Troubleshooting
 
-- **Missing environment variables**: Check if your `.env` file is correctly formatted
-- **Path issues**: Verify that all paths in the `.env` file are valid and accessible
-- **Docker volume errors**: Ensure the paths in `DOCKER_VOLUME_PATH` are correctly mapped
+1. **Run health check first**: `npm run health-check`
+2. **Check logs**: Look for specific error messages
+3. **Validate paths**: Ensure all directories exist
+4. **Reset configuration**: Run `npm run quick-setup` again
+5. **Force reindex**: `npm run reindex`
 
-## Benefits of this Approach
+## Support
 
-- Single source of truth for all configuration
-- Easy to change environment settings
-- Consistent configuration across development and production
-- No hardcoded values in source code
-- Better security by keeping sensitive information in the .env file
+If you encounter issues:
+
+1. Run `npm run diagnose` for detailed information
+2. Check the health check output for specific errors
+3. Ensure all file paths in `.env` are correct for your system
+4. Verify network settings if accessing from other devices

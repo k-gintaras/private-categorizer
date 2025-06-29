@@ -1,7 +1,7 @@
 <div class="container mx-auto p-6">
   <h1 class="text-3xl font-bold mb-6">Tag Manager</h1>
 
-  <!-- Tag Form Section -->
+  <!-- Tag Form -->
   <div class="bg-base-100 p-6 rounded-lg shadow-lg mb-8">
     <h2 class="text-xl font-semibold mb-4">
       {{ editingTag ? "Edit Tag" : "Add New Tag" }}
@@ -49,7 +49,7 @@
     </form>
   </div>
 
-  <!-- Tag List Section -->
+  <!-- Tag List -->
   <div>
     <h2 class="text-xl font-semibold mb-4">Tags</h2>
     <div class="overflow-x-auto">
@@ -66,8 +66,8 @@
             <td>
               <span
                 class="badge badge-outline"
-                [style.backgroundColor]="tagColorMap.get(tag.id) || '#cccccc'"
-                [style.color]="'#fff'"
+                [style.backgroundColor]="getTagColor(tag)"
+                style="color: white"
               >
                 {{ tag.name }}
               </span>
@@ -75,12 +75,10 @@
             <td>
               <span
                 class="badge badge-outline"
-                [style.backgroundColor]="
-                  groupColorMap.get(tag.tagGroup) || '#cccccc'
-                "
-                [style.color]="'#fff'"
+                [style.backgroundColor]="getGroupColor(tag.tag_group)"
+                style="color: white"
               >
-                {{ tag.tagGroup }}
+                {{ tag.tag_group || "Ungrouped" }}
               </span>
             </td>
             <td class="text-center">

@@ -14,100 +14,200 @@ const analyticsRouter = require('./routes/analytics');
 const tagsRouter = require('./routes/tags');
 const colorsRouter = require('./routes/colors');
 
+// Import health checker
+const HealthChecker = require('../health-check');
+
 const app = express();
 
-console.log('This is messages from server.js');
-// console.log('Environment variables:', process.env);
+console.log('🚀 Starting Media Server...');
 
-// Modified part of server.js for database initialization
-const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static';
-// Use actual concatenation instead of template literals for FILE_DB_PATH
-const FILE_DB_PATH = process.env.FILE_DB_PATH || path.join(ROOT_DIRECTORY, 'file_paths.db');
-const PORT = process.env.MEDIA_SERVER_PORT || 3000;
+// Function to run health check before server startup
+async function runPreStartupChecks() {
+  console.log('\n📋 Running pre-startup health checks...');
 
-console.log(`Root directory env: ${process.env.ROOT_DIRECTORY}`);
-console.log(`Root directory: ${ROOT_DIRECTORY}`);
-console.log(`Database path: ${FILE_DB_PATH}`);
+  const checker = new HealthChecker();
+  const result = await checker.runAllChecks();
 
-// Check if ROOT_DIRECTORY exists
-if (!fs.existsSync(ROOT_DIRECTORY)) {
-  console.error(`Root directory not found: ${ROOT_DIRECTORY}`);
-  process.exit(1);
-}
-
-// In server.js or wherever the database is initialized
-
-// Check if database file exists
-if (!fs.existsSync(FILE_DB_PATH)) {
-  console.error(`Database file not found: ${FILE_DB_PATH}`);
-  console.log('Would you like to create a new database? (y/n)');
-  // Add code to prompt user and create database if needed
-  // Or automatically initiate database creation:
-  console.log(`Creating new database at ${FILE_DB_PATH}`);
-  // Run the initialization code or script here
-}
-// Database initialization
-let db;
-try {
-  db = new sqlite3.Database(FILE_DB_PATH, (err) => {
-    if (err) {
-      console.error('Error connecting to database:', err);
-      process.exit(1);
-    }
-    console.log('Connected to database successfully');
-  });
-} catch (err) {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
-}
-
-app.use(cors());
-app.use(express.json());
-
-// serve static files actual files
-app.use(
-  '/static',
-  (req, res, next) => {
-    console.log('Serving static file:', req.path);
-    next();
-  },
-  express.static(ROOT_DIRECTORY)
-);
-
-// Routes
-app.use('/files', filesRouter(db));
-app.use('/likes', likesRouter(db));
-app.use('/favorites', favoritesRouter(db));
-app.use('/dislikes', dislikesRouter(db));
-app.use('/analytics', analyticsRouter(db));
-app.use('/tags', tagsRouter(db));
-app.use('/colors', colorsRouter(db));
-
-// TODO: gettting colors crash the server
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
-  });
-});
-
-app.listen(PORT, '0.0.0.0', (err) => {
-  if (err) {
-    console.error('Failed to start server:', err);
+  if (!result.canStart) {
+    console.log('\n❌ Critical issues found. Server cannot start safely.');
+    console.log('💡 Fix the errors above and try again.');
     process.exit(1);
   }
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
-  console.log(`Files database: ${FILE_DB_PATH}`);
-  console.log(`Root directory: ${ROOT_DIRECTORY}`);
-});
 
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Closing database connections...');
-  db.close(() => {
-    console.log('Database connections closed. Exiting...');
-    process.exit(0);
+  if (result.warnings > 0) {
+    console.log('\n⚠️  Warnings detected but server can continue...');
+    console.log('💡 Consider addressing warnings for optimal performance.');
+  } else {
+    console.log('\n✅ All health checks passed!');
+  }
+
+  console.log('\n🔧 Continuing with server startup...\n');
+}
+
+// Main server startup function
+async function startServer() {
+  // Run health checks first
+  await runPreStartupChecks();
+
+  // Configuration from environment
+  const ROOT_DIRECTORY = process.env.ROOT_DIRECTORY || './static';
+  const FILE_DB_PATH = process.env.FILE_DB_PATH || path.join(ROOT_DIRECTORY, 'file_paths.db');
+  const PORT = process.env.MEDIA_SERVER_PORT || 3000;
+
+  console.log(`📁 Root directory: ${ROOT_DIRECTORY}`);
+  console.log(`🗃️  Database path: ${FILE_DB_PATH}`);
+  console.log(`🌐 Server will start on port: ${PORT}`);
+
+  // Validate critical paths after health check confirmation
+  if (!fs.existsSync(ROOT_DIRECTORY)) {
+    console.error(`❌ Critical: Root directory not found: ${ROOT_DIRECTORY}`);
+    console.log('💡 This should have been caught by health check. Please run health check manually.');
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(FILE_DB_PATH)) {
+    console.error(`❌ Critical: Database file not found: ${FILE_DB_PATH}`);
+    console.log('💡 Run: npm run index-files');
+    process.exit(1);
+  }
+
+  // Initialize database connection
+  let db;
+  try {
+    db = new sqlite3.Database(FILE_DB_PATH, (err) => {
+      if (err) {
+        console.error('❌ Database connection failed:', err);
+        process.exit(1);
+      }
+      console.log('✅ Database connected successfully');
+    });
+  } catch (err) {
+    console.error('❌ Database initialization failed:', err);
+    process.exit(1);
+  }
+
+  // Configure Express middleware
+  app.use(cors());
+  app.use(express.json());
+
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    try {
+      const checker = new HealthChecker();
+      const result = await checker.runAllChecks();
+
+      res.status(result.canStart ? 200 : 500).json({
+        status: result.canStart ? 'healthy' : 'unhealthy',
+        timestamp: new Date().toISOString(),
+        checks: {
+          passed: result.passed,
+          total: result.total,
+          warnings: result.warnings,
+          errors: result.errors,
+        },
+        canStart: result.canStart,
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
+
+  // Serve static files
+  app.use(
+    '/static',
+    (req, res, next) => {
+      console.log('📁 Serving static file:', req.path);
+      next();
+    },
+    express.static(ROOT_DIRECTORY)
+  );
+
+  // API Routes
+  app.use('/files', filesRouter(db));
+  app.use('/likes', likesRouter(db));
+  app.use('/favorites', favoritesRouter(db));
+  app.use('/dislikes', dislikesRouter(db));
+  app.use('/analytics', analyticsRouter(db));
+  app.use('/tags', tagsRouter(db));
+  app.use('/colors', colorsRouter(db));
+
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    console.error('💥 Unhandled error:', err);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Start the server
+  const server = app.listen(PORT, '0.0.0.0', (err) => {
+    if (err) {
+      console.error('❌ Failed to start server:', err);
+      process.exit(1);
+    }
+
+    console.log('\n' + '='.repeat(60));
+    console.log('🎉 MEDIA SERVER STARTED SUCCESSFULLY!');
+    console.log('='.repeat(60));
+    console.log(`🌐 Server URL: http://0.0.0.0:${PORT}`);
+    console.log(`🗃️  Database: ${FILE_DB_PATH}`);
+    console.log(`📁 Root Directory: ${ROOT_DIRECTORY}`);
+    console.log(`🏥 Health Check: http://0.0.0.0:${PORT}/health`);
+    console.log('='.repeat(60));
+  });
+
+  // Graceful shutdown handling
+  const gracefulShutdown = (signal) => {
+    console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+
+    server.close((err) => {
+      if (err) {
+        console.error('❌ Error during server shutdown:', err);
+        process.exit(1);
+      }
+
+      console.log('✅ Server closed successfully');
+
+      if (db) {
+        db.close((err) => {
+          if (err) {
+            console.error('❌ Error closing database:', err);
+            process.exit(1);
+          }
+          console.log('✅ Database connections closed');
+          console.log('👋 Goodbye!');
+          process.exit(0);
+        });
+      } else {
+        process.exit(0);
+      }
+    });
+  };
+
+  // Register shutdown handlers
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (err) => {
+    console.error('💥 Uncaught Exception:', err);
+    gracefulShutdown('UNCAUGHT_EXCEPTION');
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+    gracefulShutdown('UNHANDLED_REJECTION');
+  });
+}
+
+// Start the server
+startServer().catch((error) => {
+  console.error('💥 Failed to start server:', error);
+  process.exit(1);
 });

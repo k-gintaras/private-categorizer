@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { FileCacheService } from './file-cache.service';
 import { SelectedFileService } from './selected-file.service';
 import { ApiConfigService } from './api-config.service';
-import { Like } from '../models/analytics.model';
+import { Like, DbFile } from '../models';
 import { VideoPlayerService } from './video-player.service';
-import { FileInfo } from '../models/file.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LikeService {
-  private lastLikeTimestamp: number | null = null; // Track the last rounded timestamp for a like
-  private likeInterval = 1000; // Minimum interval between likes in milliseconds
+  private lastLikeTimestamp: number | null = null;
+  private likeInterval = 1000; // 1 second throttle
 
   constructor(
     private http: HttpClient,
@@ -23,26 +23,26 @@ export class LikeService {
     private videoPlayerService: VideoPlayerService
   ) {}
 
-  addLike(file: FileInfo): Observable<Like> {
+  addLike(fileId: number, isPlayable: boolean): Observable<Like> {
     const currentTime = Date.now();
 
     if (
       this.lastLikeTimestamp &&
       currentTime - this.lastLikeTimestamp < this.likeInterval
     ) {
-      throw new Error('Likes are throttled to prevent spam.');
+      return throwError(
+        () => new Error('Likes are throttled to prevent spam.')
+      );
     }
 
     this.lastLikeTimestamp = currentTime;
 
-    // Determine timestamp based on file type
-    const timestamp =
-      file.subtype === 'video' || file.subtype === 'audio'
-        ? Math.round(this.videoPlayerService.getCurrentPlayTime())
-        : currentTime;
+    const timestamp = isPlayable
+      ? Math.round(this.videoPlayerService.getCurrentPlayTime())
+      : Math.floor(currentTime / 1000); // Use seconds for consistency
 
-    const likePayload: Partial<Like> = {
-      fileId: file.id,
+    const likePayload = {
+      fileId: fileId,
       timestamp,
     };
 
@@ -51,36 +51,27 @@ export class LikeService {
       .pipe(
         tap((savedLike) => {
           console.log('Like added:', savedLike);
+          this.updateLikeInCache(fileId, savedLike);
         })
       );
   }
 
-  /**
-   * Remove a like from the selected file and update the cache.
-   * @param likeId The ID of the like to remove
-   */
   removeLike(likeId: number): Observable<void> {
     const selectedFile = this.selectedFileService.getSelectedFile();
 
     if (!selectedFile) {
-      throw new Error('No file selected.');
+      return throwError(() => new Error('No file selected.'));
     }
 
     return this.http
       .delete<void>(`${this.apiConfig.getApiBaseUrl()}/likes/${likeId}`)
       .pipe(
-        // After removing the like, update the cache
         tap(() => {
           this.removeLikeFromCache(selectedFile.id, likeId);
         })
       );
   }
 
-  /**
-   * Update the cache with the new like data.
-   * @param fileId The ID of the file to update
-   * @param newLike The like object to add
-   */
   private updateLikeInCache(fileId: number, newLike: Like): void {
     const file = this.fileCacheService.getFileById(fileId);
 
@@ -90,11 +81,6 @@ export class LikeService {
     }
   }
 
-  /**
-   * Remove a like from the cache.
-   * @param fileId The ID of the file to update
-   * @param likeId The ID of the like to remove
-   */
   private removeLikeFromCache(fileId: number, likeId: number): void {
     const file = this.fileCacheService.getFileById(fileId);
 
