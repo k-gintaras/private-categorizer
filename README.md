@@ -1,186 +1,56 @@
-# Media Server Setup Guide
+# Media Server
 
-## Quick Start (Recommended)
-
-For new installations, use the quick setup wizard:
+## Quick Start
 
 ```bash
-npm run quick-setup
+npm run setup    # Initial setup wizard
+npm start        # Start both server and client
 ```
 
-This will guide you through:
+### Available Scripts
 
-- ✅ Configuring media directory paths
-- ✅ Setting up network access
-- ✅ Installing dependencies
-- ✅ Indexing your media files
-- ✅ Running health checks
-
-## Manual Setup
-
-If you prefer manual configuration:
-
-### 1. Configure Environment
+Setup & Health
 
 ```bash
-# Copy and edit the environment file
-cp .env3 .env
-# Edit .env with your settings
+npm run setup - Interactive setup wizard
+npm run health - Check if everything is configured correctly
+npm run fresh-install - Nuclear option: delete DB + node_modules
 ```
 
-### 2. Setup and Health Check
+### Running
 
 ```bash
-npm run setup-env        # Generate config files
-npm run health-check     # Validate configuration
+npm start - Start both server and client
+npm run start-server - Server only
+npm run start-client - Client only (Angular dev server)
 ```
 
-### 3. Install Dependencies
+### File Management
 
 ```bash
-npm run setup-all        # Install all dependencies
+npm run index - Scan media files into database
+npm run reindex - Force re-scan all files
 ```
 
-### 4. Index Media Files
+### Docker
 
 ```bash
-npm run index-files      # First time indexing
-npm run reindex          # Force re-index
+npm run docker - Build and start with Docker
+npm run docker-dev - Start existing Docker containers
 ```
 
-## Starting the Server
+### Development
 
 ```bash
-npm start                # Start both server and client
-npm run start-server     # Server only
-npm run start-client     # Client only
-npm run start-force      # Force reindex and start
+npm run deps - Install all dependencies
+npm run build-client - Build Angular app for production
+npm run git-reset - Hard reset to latest main (nuclear git option)
 ```
 
-## Health Checks and Diagnostics
+### Troubleshooting
 
 ```bash
-npm run health-check     # Check system health
-npm run validate         # Same as health-check
-npm run diagnose         # Health check with tips
+npm run health - Check what's broken
+npm run reindex - If files aren't showing up
+npm run fresh-install - If everything is broken
 ```
-
-## What the Health Check Validates
-
-### Environment Configuration
-
-- ✅ `.env` file exists and is properly formatted
-- ✅ All required environment variables are set
-- ✅ No default values that should be customized
-- ✅ Network configuration is consistent
-
-### Directory Structure
-
-- ✅ Media directory exists and is accessible
-- ✅ Database directory is readable/writable
-- ✅ Paths are properly configured
-
-### Database Health
-
-- ✅ Database file exists and is accessible
-- ✅ All required tables are present
-- ✅ Database schema is up to date
-
-### File Indexing
-
-- ✅ Media files are indexed in database
-- ✅ Index is recent (warns if > 7 days old)
-- ✅ File count matches expectations
-
-### Network Configuration
-
-- ✅ Server URL matches host and port settings
-- ✅ Port is valid and available
-- ✅ Network access is properly configured
-
-## Common Issues and Solutions
-
-### "No files found in database"
-
-```bash
-npm run index-files      # Index your media files
-```
-
-### "Directory not found"
-
-- Check your `.env` file paths
-- Ensure directories exist
-- Run `npm run quick-setup` to reconfigure
-
-### "Database connection failed"
-
-```bash
-npm run index-files      # Recreate database
-```
-
-### "Port already in use"
-
-- Change `MEDIA_SERVER_PORT` in `.env`
-- Or stop the conflicting service
-
-### "Default values detected"
-
-- Run `npm run quick-setup` to customize configuration
-- Manually edit `.env` file with your specific paths
-
-## Development vs Production
-
-### Development (Local Only)
-
-```bash
-SERVER_HOST=localhost
-SERVER_URL=http://localhost:4001
-```
-
-### Network Access (LAN)
-
-```bash
-SERVER_HOST=192.168.1.174    # Your machine's IP
-SERVER_URL=http://192.168.1.174:4001
-```
-
-## Docker Deployment
-
-```bash
-npm run docker-full      # Build and start with Docker
-npm run docker-build     # Build only
-npm run docker-up        # Start existing containers
-```
-
-## Configuration Files
-
-- `.env` - Main configuration
-- `media-viewer/src/environments/environment.ts` - Angular config (auto-generated)
-- `docker-compose.yml` - Docker configuration (auto-generated)
-
-## Health Check API
-
-When server is running, check health at:
-
-```
-GET http://localhost:4001/health
-```
-
-Returns JSON with health status and detailed check results.
-
-## Troubleshooting
-
-1. **Run health check first**: `npm run health-check`
-2. **Check logs**: Look for specific error messages
-3. **Validate paths**: Ensure all directories exist
-4. **Reset configuration**: Run `npm run quick-setup` again
-5. **Force reindex**: `npm run reindex`
-
-## Support
-
-If you encounter issues:
-
-1. Run `npm run diagnose` for detailed information
-2. Check the health check output for specific errors
-3. Ensure all file paths in `.env` are correct for your system
-4. Verify network settings if accessing from other devices
