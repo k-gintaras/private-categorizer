@@ -14,3 +14,12 @@ media.db
 *.log
 .DS_Store
 Thumbs.db
+
+# Auto-generated config files
+media-viewer/src/environments/environment.ts
+server-env.sh
+docker-compose.yml
+
+# Runtime/cache files
+*.db
+*.sock
