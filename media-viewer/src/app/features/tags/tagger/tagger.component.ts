@@ -4,9 +4,14 @@ import { SelectedFileService } from '../../../services/selected-file.service';
 import { GroupedTags, TagService } from '../../../services/tag.service';
 import { NgFor, NgIf } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { TagManagerComponent, TagGroup, TagItem, Tag } from 'shared-components';
 import { FileService } from 'src/app/services/file.service';
 import { FullFile, ParsedFile } from 'src/app/models';
+import {
+  Tag,
+  TagGroup,
+  TagItem,
+  TagManagerComponent,
+} from '@ubaby/shared-components';
 
 @Component({
   selector: 'app-tagger',
