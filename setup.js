@@ -1,4 +1,4 @@
-// quick-setup.js
+// setup.js
 const fs = require('fs');
 const path = require('path');
 const { promisify } = require('util');
@@ -29,7 +29,6 @@ class QuickSetup {
 
   async askQuestion(questionText, defaultValue = '') {
     const prompt = defaultValue ? `${questionText} (default: ${defaultValue}): ` : `${questionText}: `;
-
     const answer = await question(prompt);
     return answer.trim() || defaultValue;
   }
@@ -51,7 +50,7 @@ class QuickSetup {
     if (existingPaths.length > 0) {
       this.log('Found existing media directories:');
       existingPaths.forEach((p, i) => console.log(`  ${i + 1}. ${p}`));
-      return existingPaths[0]; // Return first found
+      return existingPaths[0];
     }
 
     return '';
@@ -77,13 +76,10 @@ class QuickSetup {
     console.log('='.repeat(60));
     console.log('This wizard will help you configure your media server.\n');
 
-    // Detect and suggest paths
     const suggestedPath = await this.detectPaths();
 
-    // Get root directory
     this.config.ROOT_DIRECTORY = await this.askQuestion('📁 Enter the path to your media files', suggestedPath || 'C:\\Users\\Public\\Videos');
 
-    // Validate root directory
     if (!fs.existsSync(this.config.ROOT_DIRECTORY)) {
       const create = await this.askQuestion(`⚠️  Directory doesn't exist. Create it? (y/n)`, 'y');
 
@@ -101,12 +97,9 @@ class QuickSetup {
       }
     }
 
-    // Set database path
     this.config.FILE_DB_PATH = path.join(this.config.ROOT_DIRECTORY, 'file_paths.db');
 
-    // Get network configuration
     const detectedIP = await this.getNetworkIP();
-
     const useNetwork = await this.askQuestion('🌐 Allow network access? (y/n)', 'y');
 
     if (useNetwork.toLowerCase() === 'y') {
@@ -115,10 +108,7 @@ class QuickSetup {
       this.config.SERVER_HOST = 'localhost';
     }
 
-    // Get port
     this.config.MEDIA_SERVER_PORT = await this.askQuestion('🔌 Server port', '4001');
-
-    // Set remaining configuration
     this.config.MEDIA_SERVER_HOST = '0.0.0.0';
     this.config.ANGULAR_APP_PORT = '4200';
     this.config.IS_DOCKER = 'false';
@@ -136,8 +126,6 @@ class QuickSetup {
     const envContent = `# Media Application Environment Configuration
 
 # Base paths and directories
-# must use full paths please
-# path configuration
 IS_DOCKER=${this.config.IS_DOCKER}
 DOCKER_VOLUME_PATH=${this.config.DOCKER_VOLUME_PATH}
 ROOT_DIRECTORY=${this.config.ROOT_DIRECTORY}
@@ -151,7 +139,6 @@ MEDIA_SERVER_HOST=${this.config.MEDIA_SERVER_HOST}
 ANGULAR_APP_PORT=${this.config.ANGULAR_APP_PORT}
 
 # Network configuration
-# Use 'localhost' for local development or your machine's IP for network access
 SERVER_HOST=${this.config.SERVER_HOST}
 SERVER_URL=${this.config.SERVER_URL}
 `;
@@ -161,40 +148,20 @@ SERVER_URL=${this.config.SERVER_URL}
     this.log(`Environment file created: ${envPath}`, 'success');
   }
 
-  async runSetupCommands() {
-    this.log('🔧 Running setup commands...');
+  async generateEnvironmentFiles() {
+    this.log('🔧 Generating environment files...');
 
-    const commands = ['npm run setup-env', 'npm run health-check'];
-
-    for (const cmd of commands) {
-      try {
-        this.log(`Running: ${cmd}`);
-        execSync(cmd, { stdio: 'inherit', cwd: __dirname });
-        this.log(`✅ ${cmd} completed`);
-      } catch (error) {
-        this.log(`❌ ${cmd} failed: ${error.message}`, 'error');
-
-        if (cmd.includes('health-check')) {
-          this.log('Health check failed - this is normal for first setup', 'warning');
-        } else {
-          throw error;
-        }
+    try {
+      // Check if setup-env.js exists, if not skip
+      if (fs.existsSync(path.join(__dirname, 'setup-env.js'))) {
+        execSync('node setup-env.js', { stdio: 'inherit', cwd: __dirname });
+        this.log('✅ Environment files generated');
+      } else {
+        this.log('⚠️  setup-env.js not found, skipping', 'warning');
       }
-    }
-  }
-
-  async indexFiles() {
-    const shouldIndex = await this.askQuestion('📚 Index media files now? (recommended - y/n)', 'y');
-
-    if (shouldIndex.toLowerCase() === 'y') {
-      try {
-        this.log('📚 Indexing files... This may take a while.');
-        execSync('npm run index-files', { stdio: 'inherit', cwd: __dirname });
-        this.log('✅ File indexing completed', 'success');
-      } catch (error) {
-        this.log(`❌ File indexing failed: ${error.message}`, 'error');
-        this.log('You can run "npm run index-files" later', 'warning');
-      }
+    } catch (error) {
+      this.log(`❌ Environment generation failed: ${error.message}`, 'error');
+      // Continue anyway
     }
   }
 
@@ -203,16 +170,27 @@ SERVER_URL=${this.config.SERVER_URL}
 
     if (shouldInstall.toLowerCase() === 'y') {
       try {
-        this.log('📦 Installing server dependencies...');
-        execSync('npm run setup-server', { stdio: 'inherit', cwd: __dirname });
-
-        this.log('📦 Installing client dependencies...');
-        execSync('npm run setup-client', { stdio: 'inherit', cwd: __dirname });
-
+        this.log('📦 Installing dependencies...');
+        execSync('npm run deps', { stdio: 'inherit', cwd: __dirname });
         this.log('✅ Dependencies installed', 'success');
       } catch (error) {
         this.log(`❌ Dependency installation failed: ${error.message}`, 'error');
-        this.log('You can run "npm run setup-all" later', 'warning');
+        this.log('You can run "npm run deps" later', 'warning');
+      }
+    }
+  }
+
+  async initializeDatabase() {
+    const shouldInit = await this.askQuestion('🗃️  Initialize database and index files? (recommended - y/n)', 'y');
+
+    if (shouldInit.toLowerCase() === 'y') {
+      try {
+        this.log('🗃️  Initializing database and scanning files... This may take a while.');
+        execSync('npm run init-db', { stdio: 'inherit', cwd: __dirname });
+        this.log('✅ Database initialization completed', 'success');
+      } catch (error) {
+        this.log(`❌ Database initialization failed: ${error.message}`, 'error');
+        this.log('You can run "npm run init-db" later', 'warning');
       }
     }
   }
@@ -221,7 +199,7 @@ SERVER_URL=${this.config.SERVER_URL}
     this.log('🏥 Running final health check...');
 
     try {
-      execSync('npm run health-check', { stdio: 'inherit', cwd: __dirname });
+      execSync('npm run health', { stdio: 'inherit', cwd: __dirname });
       this.log('✅ Final health check passed!', 'success');
       return true;
     } catch (error) {
@@ -245,15 +223,15 @@ SERVER_URL=${this.config.SERVER_URL}
     } else {
       console.log('⚠️  Setup completed with warnings');
       console.log('\n🔧 To fix issues:');
-      console.log('  npm run health-check      # Check what needs fixing');
-      console.log('  npm run index-files       # Index your media files');
-      console.log('  npm run diagnose          # Get detailed diagnostics');
+      console.log('  npm run health            # Check what needs fixing');
+      console.log('  npm run init-db           # Initialize database');
+      console.log('  npm run reindex           # Re-scan media files');
     }
 
     console.log('\n🛠️  Other useful commands:');
-    console.log('  npm run health-check      # Check system health');
+    console.log('  npm run health            # Check system health');
     console.log('  npm run reindex           # Re-scan media files');
-    console.log('  npm run validate          # Validate configuration');
+    console.log('  npm run fresh-install     # Nuclear option: reset everything');
 
     console.log(`\n📁 Your media directory: ${this.config.ROOT_DIRECTORY}`);
     console.log(`🌐 Server will be available at: ${this.config.SERVER_URL}`);
@@ -274,9 +252,9 @@ SERVER_URL=${this.config.SERVER_URL}
       }
 
       this.createEnvFile();
-      await this.runSetupCommands();
+      await this.generateEnvironmentFiles();
       await this.installDependencies();
-      await this.indexFiles();
+      await this.initializeDatabase();
 
       const healthCheckPassed = await this.finalHealthCheck();
       this.printNextSteps(healthCheckPassed);
@@ -295,7 +273,6 @@ async function main() {
   await setup.run();
 }
 
-// Run if called directly
 if (require.main === module) {
   main().catch((error) => {
     console.error('💥 Setup failed:', error);

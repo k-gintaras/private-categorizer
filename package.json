@@ -1,17 +1,17 @@
 {
   "scripts": {
     "setup": "node setup.js",
+    "index": "node media-server/tools/init-database.js",
+    "reindex": "node media-server/tools/init-database.js --force",
     "health": "node health-check.js",
     "start": "concurrently \"npm run start-server\" \"npm run start-client\"",
     "start-server": "cd media-server && npm start",
     "start-client": "cd media-viewer && npm start",
-    "index": "node media-server/tools/index-folder.js",
-    "reindex": "node media-server/tools/index-folder.js --force",
     "fresh-install": "node scripts/fresh-install.js",
+    "git-reset": "git fetch origin && git reset --hard origin/main",
     "docker": "npm run build-client && docker-compose up --build",
     "docker-dev": "docker-compose up",
     "build-client": "cd media-viewer && npm run build",
-    "git-reset": "git fetch origin && git reset --hard origin/main",
     "deps": "npm run deps-server && npm run deps-client",
     "deps-server": "cd media-server && npm install",
     "deps-client": "cd media-viewer && npm install"

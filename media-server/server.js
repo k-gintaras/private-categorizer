@@ -13,6 +13,7 @@ const dislikesRouter = require('./routes/dislikes');
 const analyticsRouter = require('./routes/analytics');
 const tagsRouter = require('./routes/tags');
 const colorsRouter = require('./routes/colors');
+const uploadRouter = require('./routes/upload');
 
 // Import health checker
 const HealthChecker = require('../health-check');
@@ -134,6 +135,7 @@ async function startServer() {
   app.use('/analytics', analyticsRouter(db));
   app.use('/tags', tagsRouter(db));
   app.use('/colors', colorsRouter(db));
+  app.use('/upload', uploadRouter());
 
   // Error handling middleware
   app.use((err, req, res, next) => {
